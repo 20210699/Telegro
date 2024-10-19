@@ -2,6 +2,7 @@ package com.telegro.telegro.domain.cart.dto.response;
 
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.product.entity.Product;
+import com.telegro.telegro.domain.product.service.ProductService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -22,14 +23,15 @@ public record CartResponseDTO(
         @Schema(description = "주문 수량")
         int quantity
 ) {
-    public static CartResponseDTO of(Cart cart, Product product) {
+
+    public static CartResponseDTO of(Cart cart, Product product, ProductService productService) {
         return CartResponseDTO.builder()
                 .id(cart.getId())
                 .coverImage(product.getCoverImage())
                 .productName(product.getProductName())
                 .productModel(product.getProductModel())
                 .productOption(cart.getProductOption())
-                .productPrice(cart.getProductPrice()) // 수량 * 금액
+                .productPrice(Long.valueOf(productService.selectPriceByUserRole(product, cart.getUser())))
                 .quantity(cart.getQuantity())
                 .build();
     }

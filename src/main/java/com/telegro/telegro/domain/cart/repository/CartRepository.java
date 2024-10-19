@@ -14,6 +14,7 @@ import java.util.Optional;
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Long> {
     List<Cart> findByUserAndProduct(User user, Product product);
+
     Page<Cart> findAllByUser(User user, Pageable pageable);
 
     void deleteByIdAndUserId(Long cartId, Long userId);

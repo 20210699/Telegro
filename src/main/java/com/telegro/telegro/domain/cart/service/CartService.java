@@ -8,6 +8,7 @@ import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.product.entity.Product;
 import com.telegro.telegro.domain.product.repository.ProductRepository;
+import com.telegro.telegro.domain.product.service.ProductService;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
@@ -28,6 +29,7 @@ public class CartService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
+    private final ProductService productService;
 
     @Transactional
     public CreatedCartDTO addCartItem(Long userId, Long productId, CartRequestDTO request) {
@@ -53,7 +55,6 @@ public class CartService {
 
     private Cart updateExistingCart(Cart existingCart, CartRequestDTO request) {
         existingCart.setQuantity(existingCart.getQuantity() + request.quantity());
-        existingCart.setProductPrice(existingCart.getProductPrice() + request.productPrice() * request.quantity());
         return existingCart;
     }
 
@@ -63,7 +64,6 @@ public class CartService {
                 .product(product)
                 .quantity(request.quantity())
                 .productOption(request.productOption())
-                .productPrice(request.productPrice() * request.quantity())
                 .build();
     }
 
@@ -80,10 +80,10 @@ public class CartService {
         long totalElement = carts.getTotalElements();
 
         List<CartResponseDTO> cartDTOs = carts.getContent().stream()
-                .map(cart -> CartResponseDTO.of(cart, cart.getProduct())).toList();
+                .map(cart -> CartResponseDTO.of(cart, cart.getProduct(), productService)).toList();
 
-        double totalPrice = carts.getContent().stream()
-                .mapToDouble(Cart::getProductPrice)
+        double totalPrice = cartDTOs.stream()
+                .mapToDouble(cartDTO -> cartDTO.productPrice() * cartDTO.quantity())
                 .sum();
 
         return CartListDTO.builder()
@@ -106,13 +106,22 @@ public class CartService {
         Cart cart = cartRepository.findByIdAndUserId(cartId, id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
-        cart.setProductOption(request.productOption());
-        cart.setProductPrice(request.productPrice() * request.quantity());
-        cart.setQuantity(request.quantity());
+        List<Cart> existingCarts = cartRepository.findByUserAndProduct(cart.getUser(), cart.getProduct()).stream()
+                .filter(c -> !c.getId().equals(cart.getId()) && c.getProductOption().equals(request.productOption()))
+                .toList();
 
-        Cart updatedCart = cartRepository.save(cart);
-
-        return CreatedCartDTO.builder().id(updatedCart.getId()).build();
+        if (!existingCarts.isEmpty()) {
+            Cart existingCart = existingCarts.get(0);
+            existingCart.setQuantity(existingCart.getQuantity() + request.quantity());
+            cartRepository.delete(cart);
+            Cart updatedCart = cartRepository.save(existingCart);
+            return CreatedCartDTO.builder().id(updatedCart.getId()).build();
+        } else {
+            cart.setProductOption(request.productOption());
+            cart.setQuantity(request.quantity());
+            Cart updatedCart = cartRepository.save(cart);
+            return CreatedCartDTO.builder().id(updatedCart.getId()).build();
+        }
     }
 
 }

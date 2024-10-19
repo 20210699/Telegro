@@ -32,9 +32,6 @@ public class Cart extends BaseEntity {
     @Column
     private String productOption;
 
-    @Column
-    private Long productPrice;
-
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
