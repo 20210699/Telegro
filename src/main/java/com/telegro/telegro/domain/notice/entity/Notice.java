@@ -15,7 +15,6 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class Notice extends BaseEntity {
-    //TODO: 팝업 체크 여부 칼럼 추가
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

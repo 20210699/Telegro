@@ -21,7 +21,7 @@ public class FileController {
 	@PostMapping
 	public SuccessResponse<PresignedUrlDto> getPresignedUrl(@LoginInfo Long id,
 															@RequestParam @Parameter(description = "이미지 저장 시 prefix",
-			examples = {@ExampleObject(name = "product 관련 이미지", value = "product")}) String prefix) {
+			examples = {@ExampleObject(name = "product 관련 이미지", value = "product"), @ExampleObject(name = "notice 관련 파일", value = "notice")}) String prefix) {
 		return SuccessResponse.of(fileService.createPresignedUrl(prefix, id));
 	}
 
