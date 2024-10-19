@@ -99,4 +99,20 @@ public class CartService {
     public void deleteCartItem(Long id, Long cartId) {
         cartRepository.deleteByIdAndUserId(cartId, id);
     }
+
+    @Transactional
+    public CreatedCartDTO updateCartItem(Long id, Long cartId, CartRequestDTO request) {
+
+        Cart cart = cartRepository.findByIdAndUserId(cartId, id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        cart.setProductOption(request.productOption());
+        cart.setProductPrice(request.productPrice() * request.quantity());
+        cart.setQuantity(request.quantity());
+
+        Cart updatedCart = cartRepository.save(cart);
+
+        return CreatedCartDTO.builder().id(updatedCart.getId()).build();
+    }
+
 }

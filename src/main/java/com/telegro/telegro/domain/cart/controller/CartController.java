@@ -30,4 +30,9 @@ public class CartController implements CartControllerDocs {
         return SuccessResponse.of();
     }
 
+    @PutMapping("/{cartId}")
+    public SuccessResponse<CreatedCartDTO> updateCartItem(Long id, Long cartId, CartRequestDTO request) {
+        return SuccessResponse.of(cartService.updateCartItem(id, cartId, request));
+    }
+
 }
