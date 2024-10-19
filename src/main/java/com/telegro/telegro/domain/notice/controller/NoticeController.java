@@ -36,4 +36,9 @@ public class NoticeController implements NoticeControllerDocs {
         return SuccessResponse.of();
     }
 
+    @PatchMapping("/api/notices/{noticeId}")
+    public SuccessResponse<NoticeDetailDTO> updateNotice(Long id, Long noticeId, Notice request) {
+        return SuccessResponse.of(noticeService.updateNotice(id, noticeId, request));
+    }
+
 }

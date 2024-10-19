@@ -31,7 +31,7 @@ public interface NoticeControllerDocs {
     @ApiResponse(responseCode = "200", description = "게시글 삭제 성공")
     public SuccessResponse<Boolean> deleteNotice(@LoginInfo Long id, @PathVariable Long noticeId);
 
-//    @Operation(description = "공지사항 게시글을 수정합니다.")
-//    @ApiResponse(responseCode = "200", description = "게시글 수정 성공")
-//    public SuccessResponse<CreatedNoticeDTO> createNotice(@LoginInfo Long id, @RequestBody Notice request);
+    @Operation(description = "공지사항 게시글을 수정합니다.")
+    @ApiResponse(responseCode = "200", description = "게시글 수정 성공")
+    public SuccessResponse<NoticeDetailDTO> updateNotice(@LoginInfo Long id, @PathVariable Long noticeId, @RequestBody Notice request);
 }

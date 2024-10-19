@@ -107,4 +107,51 @@ public class NoticeService {
 
         noticeRepository.deleteById(noticeId);
     }
+
+    @Transactional
+    public NoticeDetailDTO updateNotice(Long userId, Long noticeId, Notice request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if (!user.getRole().equals(Role.ADMIN)) {
+            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
+        }
+
+        Notice notice = noticeRepository.findById(noticeId)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if (request.getTitle() != null) {
+            notice.setTitle(request.getTitle());
+        }
+
+        if (request.getContext() != null) {
+            notice.setContext(request.getContext());
+        }
+
+        if (request.getNoticeFiles() != null && !request.getNoticeFiles().isEmpty()) {
+            notice.getNoticeFiles().clear();
+            for (NoticeFile noticeFile : request.getNoticeFiles()) {
+                noticeFile.setNotice(notice);
+            }
+            notice.setNoticeFiles(request.getNoticeFiles());
+        }
+
+        Notice updatedNotice = noticeRepository.save(notice);
+
+        List<NoticeFileDTO> noticeFiles = noticeFileRepository.findByNoticeId(noticeId).stream()
+                .map(NoticeFileDTO::of)
+                .toList();
+
+        return NoticeDetailDTO.builder()
+                .id(updatedNotice.getId())
+                .noticeTitle(updatedNotice.getTitle())
+                .noticeContent(updatedNotice.getContext())
+                .noticeFiles(noticeFiles)
+                .noticeAuthor(updatedNotice.getUser().getUsername())
+                .noticeCreateDate(updatedNotice.getCreatedAt())
+                .viewCount(updatedNotice.getViewCount())
+                .build();
+    }
+
 }
