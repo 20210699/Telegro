@@ -67,6 +67,7 @@ public class CartService {
                 .build();
     }
 
+    @Transactional
     public CartListDTO getCartItems(Long id, int page, int size) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
@@ -92,5 +93,10 @@ public class CartService {
                 .totalPrice(totalPrice)
                 .carts(cartDTOs)
                 .build();
+    }
+
+    @Transactional
+    public void deleteCartItem(Long id, Long cartId) {
+        cartRepository.deleteByIdAndUserId(cartId, id);
     }
 }

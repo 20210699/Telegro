@@ -6,10 +6,7 @@ import com.telegro.telegro.domain.cart.dto.response.CreatedCartDTO;
 import com.telegro.telegro.domain.cart.service.CartService;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/carts")
@@ -25,6 +22,12 @@ public class CartController implements CartControllerDocs {
     @GetMapping
     public SuccessResponse<CartListDTO> getCartItems(Long id, int page, int size) {
         return SuccessResponse.of(cartService.getCartItems(id, page, size));
+    }
+
+    @DeleteMapping("/{cartId}")
+    public SuccessResponse<Boolean> deleteCartItem(Long id, Long cartId) {
+        cartService.deleteCartItem(id, cartId);
+        return SuccessResponse.of();
     }
 
 }
