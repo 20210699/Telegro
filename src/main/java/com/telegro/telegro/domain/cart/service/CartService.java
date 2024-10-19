@@ -1,6 +1,8 @@
 package com.telegro.telegro.domain.cart.service;
 
 import com.telegro.telegro.domain.cart.dto.request.CartRequestDTO;
+import com.telegro.telegro.domain.cart.dto.response.CartListDTO;
+import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.dto.response.CreatedCartDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
@@ -12,6 +14,8 @@ import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,4 +67,30 @@ public class CartService {
                 .build();
     }
 
+    public CartListDTO getCartItems(Long id, int page, int size) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        PageRequest pageRequest = PageRequest.of(page, size);
+
+        Page<Cart> carts = cartRepository.findAllByUser(user, pageRequest);
+        boolean isLast = carts.isLast();
+        int totalPage = carts.getTotalPages();
+        long totalElement = carts.getTotalElements();
+
+        List<CartResponseDTO> cartDTOs = carts.getContent().stream()
+                .map(cart -> CartResponseDTO.of(cart, cart.getProduct())).toList();
+
+        double totalPrice = carts.getContent().stream()
+                .mapToDouble(Cart::getProductPrice)
+                .sum();
+
+        return CartListDTO.builder()
+                .isLast(isLast)
+                .totalPage(totalPage)
+                .totalElement(totalElement)
+                .totalPrice(totalPrice)
+                .carts(cartDTOs)
+                .build();
+    }
 }

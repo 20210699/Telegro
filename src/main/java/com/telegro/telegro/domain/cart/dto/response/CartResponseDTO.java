@@ -1,0 +1,36 @@
+package com.telegro.telegro.domain.cart.dto.response;
+
+import com.telegro.telegro.domain.cart.entity.Cart;
+import com.telegro.telegro.domain.product.entity.Product;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+
+@Builder
+public record CartResponseDTO(
+        @Schema(description = "장바구니 id")
+        Long id,
+        @Schema(description = "상품 대표이미지")
+        String coverImage,
+        @Schema(description = "상품명")
+        String productName,
+        @Schema(description = "모델명")
+        String productModel,
+        @Schema(description = "선택한 옵션")
+        String productOption,
+        @Schema(description = "상품 금액")
+        Long productPrice,
+        @Schema(description = "주문 수량")
+        int quantity
+) {
+    public static CartResponseDTO of(Cart cart, Product product) {
+        return CartResponseDTO.builder()
+                .id(cart.getId())
+                .coverImage(product.getCoverImage())
+                .productName(product.getProductName())
+                .productModel(product.getProductModel())
+                .productOption(cart.getProductOption())
+                .productPrice(cart.getProductPrice()) // 수량 * 금액
+                .quantity(cart.getQuantity())
+                .build();
+    }
+}
