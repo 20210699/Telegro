@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -87,14 +86,13 @@ public class ProductService {
         }
 
         // Product를 ProductResponseDTO로 변환
-        List<ProductResponseDTO> productDTOs = products.stream()
+        return products.stream()
                 .map(product -> {
                     String price = selectPriceByUserRole(product, user);
                     return ProductResponseDTO.of(product, price);
                 })
                 .collect(Collectors.toList());
 
-        return productDTOs;
     }
 
     @Transactional
@@ -195,10 +193,8 @@ public class ProductService {
             }
         });
 
-        // 변경 사항 저장
         Product updatedProduct = productRepository.save(product);
 
-        // 업데이트된 데이터를 DTO로 변환하여 반환
         return ProductDetailResponseDTO.builder()
                 .productModel(updatedProduct.getProductModel())
                 .productName(updatedProduct.getProductName())
@@ -214,29 +210,20 @@ public class ProductService {
                 .build();
     }
 
+    public String selectPriceByUserRole(Product product, User user) {
 
-    private String selectPriceByUserRole(Product product, User user) {
-        if (user == null) {
-            // 로그인하지 않은 사용자는 'Customer' 가격을 보여줌
+        if(user == null) {
             return product.getPriceCustomer();
         }
 
         Role role = user.getRole();
 
-        switch (role) {
-            case BUSINESS:
-                return product.getPriceBussiness();
-            case BEST:
-                return product.getPriceBest();
-            case DEALER:
-                return product.getPriceDealer();
-            case MEMBER:
-                return product.getPriceCustomer();
-            case ADMIN:
-                return null;
-            default:
-                throw new IllegalArgumentException("알 수 없는 사용자 역할입니다: " + role);
-        }
+        return switch (role) {
+            case BUSINESS -> product.getPriceBussiness();
+            case BEST -> product.getPriceBest();
+            case DEALER -> product.getPriceDealer();
+            default -> product.getPriceCustomer();
+        };
     }
 
 }
