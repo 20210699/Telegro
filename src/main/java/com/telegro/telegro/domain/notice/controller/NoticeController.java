@@ -7,10 +7,7 @@ import com.telegro.telegro.domain.notice.entity.Notice;
 import com.telegro.telegro.domain.notice.service.NoticeService;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping
@@ -33,5 +30,10 @@ public class NoticeController implements NoticeControllerDocs {
         return SuccessResponse.of(noticeService.getNoticeDetail(noticeId));
     }
 
+    @DeleteMapping("/api/notices/{noticeId}")
+    public SuccessResponse<Boolean> deleteNotice(Long id, Long noticeId) {
+        noticeService.deleteNotice(id, noticeId);
+        return SuccessResponse.of();
+    }
 
 }

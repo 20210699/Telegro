@@ -95,4 +95,16 @@ public class NoticeService {
                 .viewCount(notice.getViewCount())
                 .build();
     }
+
+    @Transactional
+    public void deleteNotice(Long id, Long noticeId) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if(!user.getRole().equals(Role.ADMIN)) {
+            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
+        }
+
+        noticeRepository.deleteById(noticeId);
+    }
 }
