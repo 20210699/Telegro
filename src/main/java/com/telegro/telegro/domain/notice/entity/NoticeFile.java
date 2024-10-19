@@ -16,6 +16,9 @@ public class NoticeFile extends BaseEntity {
     private Long id;
 
     @Column
+    private String fileName;
+
+    @Column
     private String fileUrl;
 
     @ManyToOne
