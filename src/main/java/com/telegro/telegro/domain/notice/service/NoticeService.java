@@ -111,38 +111,51 @@ public class NoticeService {
     @Transactional
     public NoticeDetailDTO updateNotice(Long userId, Long noticeId, Notice request) {
 
+        // 유저 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
+        // ADMIN 권한 확인
         if (!user.getRole().equals(Role.ADMIN)) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
 
+        // 수정할 공지사항 가져오기
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
+        // 제목 수정 (존재할 경우)
         if (request.getTitle() != null) {
             notice.setTitle(request.getTitle());
         }
 
+        // 내용 수정 (존재할 경우)
         if (request.getContext() != null) {
             notice.setContext(request.getContext());
         }
 
+        // 파일 목록 수정 (존재할 경우)
         if (request.getNoticeFiles() != null && !request.getNoticeFiles().isEmpty()) {
-            notice.getNoticeFiles().clear();
+            // 1. 기존 NoticeFile에서 제거 (개별 삭제)
+            notice.getNoticeFiles().forEach(noticeFile -> noticeFile.setNotice(null)); // 자식 엔티티 관계 해제
+            notice.getNoticeFiles().clear(); // 기존 파일들 비우기
+
+            // 2. 새로운 NoticeFile 추가
             for (NoticeFile noticeFile : request.getNoticeFiles()) {
-                noticeFile.setNotice(notice);
+                noticeFile.setNotice(notice);  // 부모 엔티티 설정
+                notice.getNoticeFiles().add(noticeFile);  // 새 파일 추가
             }
-            notice.setNoticeFiles(request.getNoticeFiles());
         }
 
+        // 변경 사항 저장
         Notice updatedNotice = noticeRepository.save(notice);
 
+        // 파일 DTO 변환
         List<NoticeFileDTO> noticeFiles = noticeFileRepository.findByNoticeId(noticeId).stream()
                 .map(NoticeFileDTO::of)
                 .toList();
 
+        // 수정된 NoticeDTO 반환
         return NoticeDetailDTO.builder()
                 .id(updatedNotice.getId())
                 .noticeTitle(updatedNotice.getTitle())
@@ -153,5 +166,6 @@ public class NoticeService {
                 .viewCount(updatedNotice.getViewCount())
                 .build();
     }
+
 
 }
