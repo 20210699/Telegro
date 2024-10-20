@@ -23,6 +23,8 @@ public record NoticeDetailDTO(
         @Schema(description = "게시글 작성일")
         LocalDateTime noticeCreateDate,
         @Schema(description = "게시글 조회수")
-        int viewCount
+        int viewCount,
+        @Schema(description = "게시글 팝업 설정 여부")
+        Boolean isPop
 ) {
 }

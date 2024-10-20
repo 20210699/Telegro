@@ -10,6 +10,7 @@ import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
+import com.telegro.telegro.global.common.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,7 @@ public class NoticeService {
     private final UserRepository userRepository;
     private final NoticeRepository noticeRepository;
     private final NoticeFileRepository noticeFileRepository;
+    private final RedisUtil redisUtil;
 
     @Transactional
     public CreatedNoticeDTO createNotice(Long id, Notice request) {
@@ -93,6 +95,7 @@ public class NoticeService {
                 .noticeAuthor(notice.getUser().getUsername())
                 .noticeCreateDate(notice.getCreatedAt())
                 .viewCount(notice.getViewCount())
+                .isPop(Long.valueOf(redisUtil.getData("popup_notice_id")).equals(notice.getId()))
                 .build();
     }
 
@@ -164,8 +167,50 @@ public class NoticeService {
                 .noticeAuthor(updatedNotice.getUser().getUsername())
                 .noticeCreateDate(updatedNotice.getCreatedAt())
                 .viewCount(updatedNotice.getViewCount())
+                .isPop(Long.valueOf(redisUtil.getData("popup_notice_id")).equals(updatedNotice.getId()))
                 .build();
     }
 
 
+    public void setPopNotice(Long id, Long noticeId) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if(!user.getRole().equals(Role.ADMIN)) {
+            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
+        }
+
+        noticeRepository.findById(noticeId).orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        String key = "popup_notice_id";
+
+        if (redisUtil.existData(key)) {
+            redisUtil.deleteData(key);
+        }
+
+        redisUtil.setData(key, noticeId.toString());
+        log.info("팝업 공지가 공지 ID {}로 설정되었습니다.", noticeId);
+    }
+
+    public NoticeDetailDTO getPopNotice() {
+        Long noticeId = Long.valueOf(redisUtil.getData("popup_notice_id"));
+
+        Notice notice = noticeRepository.findById(noticeId)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        List<NoticeFileDTO> noticeFiles = noticeFileRepository.findByNoticeId(noticeId).stream()
+                .map(NoticeFileDTO::of)
+                .toList();
+
+        return NoticeDetailDTO.builder()
+                .id(notice.getId())
+                .noticeTitle(notice.getTitle())
+                .noticeContent(notice.getContext())
+                .noticeFiles(noticeFiles)
+                .noticeAuthor(notice.getUser().getUsername())
+                .noticeCreateDate(notice.getCreatedAt())
+                .viewCount(notice.getViewCount())
+                .isPop(true)
+                .build();
+    }
 }

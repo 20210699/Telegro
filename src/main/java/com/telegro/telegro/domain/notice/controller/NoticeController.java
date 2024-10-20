@@ -41,4 +41,15 @@ public class NoticeController implements NoticeControllerDocs {
         return SuccessResponse.of(noticeService.updateNotice(id, noticeId, request));
     }
 
+    @PostMapping("/api/notices/{noticeId}/popup")
+    public SuccessResponse<Boolean> setPopNotice(Long id, Long noticeId) {
+        noticeService.setPopNotice(id, noticeId);
+        return SuccessResponse.of();
+    }
+
+    @GetMapping("/notices/popup")
+    public SuccessResponse<NoticeDetailDTO> getPopNotice() {
+        return SuccessResponse.of(noticeService.getPopNotice());
+    }
+
 }
