@@ -34,4 +34,12 @@ public interface NoticeControllerDocs {
     @Operation(description = "공지사항 게시글을 수정합니다.")
     @ApiResponse(responseCode = "200", description = "게시글 수정 성공")
     public SuccessResponse<NoticeDetailDTO> updateNotice(@LoginInfo Long id, @PathVariable Long noticeId, @RequestBody Notice request);
+
+    @Operation(description = "공지사항 팝업 게시글을 설정합니다.")
+    @ApiResponse(responseCode = "200", description = "게시글 팝업 설정 성공")
+    public SuccessResponse<Boolean> setPopNotice(@LoginInfo Long id, @PathVariable Long noticeId);
+
+    @Operation(description = "공지사항 팝업 게시글을 상세 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "팝업 게시글 상세 조회 성공")
+    public SuccessResponse<NoticeDetailDTO> getPopNotice();
 }
