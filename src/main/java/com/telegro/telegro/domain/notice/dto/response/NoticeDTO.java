@@ -23,10 +23,14 @@ public record NoticeDTO(
         int viewCount
 ) {
     public static NoticeDTO of(Notice notice, int viewCount) {
+        String noticeFileName = (notice.getNoticeFiles() != null && !notice.getNoticeFiles().isEmpty()
+                && notice.getNoticeFiles().get(0) != null)
+                ? notice.getNoticeFiles().get(0).getFileName()
+                : null;
         return NoticeDTO.builder()
                 .id(notice.getId())
                 .noticeTitle(notice.getTitle())
-                .noticeFileName(notice.getNoticeFiles().get(0).getFileName())
+                .noticeFileName(noticeFileName)
                 .noticeAuthor(notice.getUser().getUsername())
                 .noticeCreateDate(notice.getCreatedAt())
                 .viewCount(viewCount)
