@@ -1,5 +1,8 @@
 package com.telegro.telegro.domain.user.service;
 
+import com.telegro.telegro.domain.notice.entity.Notice;
+import com.telegro.telegro.domain.user.dto.response.UserDTO;
+import com.telegro.telegro.domain.user.dto.response.UserListDTO;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.UserRepository;
@@ -10,8 +13,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -19,6 +27,7 @@ import org.springframework.stereotype.Service;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
     public void signUp(SignUpUserInfoDto signUpUserInfoDto) {
         User existUser = userRepository
                 .findByUserId(signUpUserInfoDto.getUserid());
@@ -57,5 +66,31 @@ public class UserService {
             throw CustomException.of(Error.INVALID_ID_PASSWORD);
         }
         return user.getId();
+    }
+
+    @Transactional
+    public UserListDTO getUsers(Long id, int page, int size) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if(!user.getRole().equals(Role.ADMIN)){
+            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
+        }
+
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<User> users = userRepository.findAll(pageRequest);
+        boolean isLast = users.isLast();
+        int totalPage = users.getTotalPages();
+        long totalElement = users.getTotalElements();
+
+        List<UserDTO> userList = users.getContent().stream()
+                .map(UserDTO::of).toList();
+
+        return UserListDTO.builder()
+                .isLast(isLast)
+                .totalPage(totalPage)
+                .totalElement(totalElement)
+                .users(userList)
+                .build();
     }
 }
