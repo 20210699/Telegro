@@ -2,6 +2,8 @@ package com.telegro.telegro.domain.user.service;
 
 import com.telegro.telegro.domain.company.controller.CompanyController;
 import com.telegro.telegro.domain.company.dto.response.CompanyDetailDTO;
+import com.telegro.telegro.domain.company.entity.Company;
+import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.company.service.CompanyService;
 import com.telegro.telegro.domain.user.dto.response.UserDTO;
 import com.telegro.telegro.domain.user.dto.response.UserDetailDTO;
@@ -32,6 +34,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final CompanyService companyService;
+    private final CompanyRepository companyRepository;
 
     public void signUp(SignUpUserInfoDto signUpUserInfoDto) {
         User existUser = userRepository
@@ -120,5 +123,26 @@ public class UserService {
                 .addressDetail(user.getAddressDetail())
                 .zipCode(user.getZipCode())
                 .build();
+    }
+
+    @Transactional
+    public void deleteUser(Long id, Long userId) {
+        User admin = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if(!admin.getRole().equals(Role.ADMIN)){
+            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if(!user.getRole().equals(Role.ADMIN) && !user.getRole().equals(Role.MEMBER)){
+            Company company = companyRepository.findByUserId(userId)
+                    .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+            companyService.deleteCompany(company.getId());
+        }
+
+        userRepository.deleteById(userId);
     }
 }

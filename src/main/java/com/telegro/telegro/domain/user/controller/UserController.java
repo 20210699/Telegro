@@ -46,4 +46,10 @@ public class UserController implements UserControllerDocs{
 
         return SuccessResponse.of(userService.getUserDetail(user));
     }
+
+    @DeleteMapping("/{userId}")
+    public SuccessResponse<Boolean> deleteUser(Long id, Long userId) {
+        userService.deleteUser(id, userId);
+        return SuccessResponse.of();
+    }
 }

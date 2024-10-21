@@ -30,10 +30,10 @@ public interface UserControllerDocs {
     @ApiResponse(responseCode = "200", description = "회원 상세 정보 조회 성공")
     public SuccessResponse<?> getUserDetail(@LoginInfo Long id, @PathVariable Long userId);
 
-//    @Operation(summary = "회원 정보를 삭제합니다.")
-//    @ApiResponse(responseCode = "200", description = "회원 정보 삭제 성공")
-//    public SuccessResponse<Boolean> deleteUser(@LoginInfo Long id);
-//
+    @Operation(summary = "회원 정보를 삭제합니다.")
+    @ApiResponse(responseCode = "200", description = "회원 정보 삭제 성공")
+    public SuccessResponse<Boolean> deleteUser(@LoginInfo Long id, @PathVariable Long userId);
+
 //    @Operation(summary = "회원 정보를 수정합니다.")
 //    @ApiResponse(responseCode = "200", description = "회원 정보 수정 성공")
 //    public SuccessResponse<UserDetailDTO> updateUser(@LoginInfo Long id);
