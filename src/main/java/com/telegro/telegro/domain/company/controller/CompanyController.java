@@ -2,6 +2,7 @@ package com.telegro.telegro.domain.company.controller;
 
 import com.telegro.telegro.domain.company.dto.request.CompanyRequestDTO;
 import com.telegro.telegro.domain.company.dto.request.CompanySignUpDTO;
+import com.telegro.telegro.domain.company.dto.response.CompanyDetailDTO;
 import com.telegro.telegro.domain.company.service.CompanyService;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
@@ -31,6 +32,12 @@ public class CompanyController implements CompanyControllerDocs{
         companyService.createCompany(companySignUpDTO.getCompanyRequestDTO());
         return SuccessResponse.of();
     }
+
+    @GetMapping
+    public SuccessResponse<CompanyDetailDTO> getCompanyDetail(Long id) {
+        return SuccessResponse.of(companyService.getCompanyDetail(id));
+    }
+
     @DeleteMapping()
     public SuccessResponse<?> deleteCompany(Long id, Long companyId) {
         validateAdminAccess(id);

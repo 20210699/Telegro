@@ -1,6 +1,7 @@
 package com.telegro.telegro.domain.company.service;
 
 import com.telegro.telegro.domain.company.dto.request.CompanyRequestDTO;
+import com.telegro.telegro.domain.company.dto.response.CompanyDetailDTO;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.user.entity.User;
@@ -21,6 +22,7 @@ import java.util.Optional;
 public class CompanyService {
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
+
     @Transactional
     public void createCompany(CompanyRequestDTO companyRequestDTO){
         User user = userRepository.findByUserId(companyRequestDTO.userId());
@@ -48,6 +50,33 @@ public class CompanyService {
             throw new RuntimeException("try to save duplicated company");
         }
     }
+
+    @Transactional
+    public CompanyDetailDTO getCompanyDetail(Long id){
+
+        Company company = companyRepository.findByUserId(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        return CompanyDetailDTO.builder()
+                .id(company.getId())
+                .role(company.getUser().getRole())
+                .userid(company.getUser().getUserId())
+                .username(company.getUser().getUsername())
+                .password(company.getUser().getPassword())
+                .phone(company.getUser().getPhone())
+                .email(company.getUser().getEmail())
+                .address(company.getUser().getAddress())
+                .addressDetail(company.getUser().getAddressDetail())
+                .zipCode(company.getUser().getZipCode())
+                .managerName(company.getManagerName())
+                .managerPhone(company.getManagerPhone())
+                .companyName(company.getCompanyName())
+                .companyNumber(company.getCompanyNumber())
+                .companyType(company.getCompanyType())
+                .companyItem(company.getCompanyItem())
+                .build();
+    }
+
     @Transactional
     public void updateCompany(CompanyRequestDTO companyRequestDTO){
 

@@ -1,7 +1,10 @@
 package com.telegro.telegro.domain.user.service;
 
-import com.telegro.telegro.domain.notice.entity.Notice;
+import com.telegro.telegro.domain.company.controller.CompanyController;
+import com.telegro.telegro.domain.company.dto.response.CompanyDetailDTO;
+import com.telegro.telegro.domain.company.service.CompanyService;
 import com.telegro.telegro.domain.user.dto.response.UserDTO;
+import com.telegro.telegro.domain.user.dto.response.UserDetailDTO;
 import com.telegro.telegro.domain.user.dto.response.UserListDTO;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
@@ -28,6 +31,7 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CompanyService companyService;
 
     public void signUp(SignUpUserInfoDto signUpUserInfoDto) {
         User existUser = userRepository
@@ -99,6 +103,22 @@ public class UserService {
                 .totalPage(totalPage)
                 .totalElement(totalElement)
                 .users(userList)
+                .build();
+    }
+
+    @Transactional
+    public UserDetailDTO getUserDetail(User user) {
+
+        return UserDetailDTO.builder()
+                .id(user.getId())
+                .role(user.getRole())
+                .userid(user.getUserId())
+                .username(user.getUsername())
+                .phone(user.getPhone())
+                .email(user.getEmail())
+                .address(user.getAddress())
+                .addressDetail(user.getAddressDetail())
+                .zipCode(user.getZipCode())
                 .build();
     }
 }

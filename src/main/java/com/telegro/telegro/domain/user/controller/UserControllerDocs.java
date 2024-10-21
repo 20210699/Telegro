@@ -1,6 +1,7 @@
 package com.telegro.telegro.domain.user.controller;
 
 import com.telegro.telegro.domain.company.dto.request.CompanySignUpDTO;
+import com.telegro.telegro.domain.user.dto.response.UserDetailDTO;
 import com.telegro.telegro.domain.user.dto.response.UserListDTO;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -24,9 +26,9 @@ public interface UserControllerDocs {
                                                                          @ExampleObject(name = "Dealer", summary = "Dealer 조회", value = "DEALER")}) Role filteredBy,
                                                  @RequestParam(value = "page") int page, @RequestParam(value = "size") int size);
 
-//    @Operation(summary = "회원 상세 정보를 조회합니다.")
-//    @ApiResponse(responseCode = "200", description = "회원 상세 정보 조회 성공")
-//    public SuccessResponse<UserDetailDTO> getUserDetail();
+    @Operation(summary = "회원 상세 정보를 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "회원 상세 정보 조회 성공")
+    public SuccessResponse<?> getUserDetail(@LoginInfo Long id, @PathVariable Long userId);
 
 //    @Operation(summary = "회원 정보를 삭제합니다.")
 //    @ApiResponse(responseCode = "200", description = "회원 정보 삭제 성공")
