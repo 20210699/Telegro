@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -43,7 +44,7 @@ public class UserService {
                 .address(signUpUserInfoDto.getAddress())
                 .addressDetail(signUpUserInfoDto.getAddressDetail())
                 .zipCode(signUpUserInfoDto.getZipCode())
-                .totalPrice(0)
+                .totalPrice(0L)
                 .email(signUpUserInfoDto.getEmail())
                 .role(Role.MEMBER)
                 .password(passwordEncoder.encode(signUpUserInfoDto.getPassword()))
@@ -69,7 +70,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserListDTO getUsers(Long id, int page, int size) {
+    public UserListDTO getUsers(Long id, Role filteredBy, int page, int size) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
@@ -78,13 +79,20 @@ public class UserService {
         }
 
         PageRequest pageRequest = PageRequest.of(page, size);
-        Page<User> users = userRepository.findAll(pageRequest);
+        Page<User> users;
+        if (filteredBy != null) {
+            users = userRepository.findByRole(filteredBy, pageRequest);
+        } else {
+            users = userRepository.findByRoleNot(Role.ADMIN, pageRequest);
+        }
+
         boolean isLast = users.isLast();
         int totalPage = users.getTotalPages();
         long totalElement = users.getTotalElements();
 
         List<UserDTO> userList = users.getContent().stream()
-                .map(UserDTO::of).toList();
+                .map(UserDTO::of)
+                .collect(Collectors.toList());
 
         return UserListDTO.builder()
                 .isLast(isLast)

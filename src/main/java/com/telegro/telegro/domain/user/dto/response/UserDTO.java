@@ -35,7 +35,7 @@ public record UserDTO(
                 .email(user.getEmail())
                 .userId(user.getUserId())
                 .createdDate(user.getCreatedAt())
-//                .totalPrice() //Todo: totalPrice 구현
+                .totalPrice(user.getTotalPrice())
                 .build();
     }
 }
