@@ -6,6 +6,8 @@ import com.telegro.telegro.domain.product.service.ProductService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.util.List;
+
 @Builder
 public record CartResponseDTO(
         @Schema(description = "장바구니 id")
@@ -21,7 +23,9 @@ public record CartResponseDTO(
         @Schema(description = "상품 금액")
         Long productPrice,
         @Schema(description = "주문 수량")
-        int quantity
+        int quantity,
+        @Schema(description = "상품 전체 옵션")
+        List<String> productOptions
 ) {
 
     public static CartResponseDTO of(Cart cart, Product product, ProductService productService) {
@@ -33,6 +37,7 @@ public record CartResponseDTO(
                 .productOption(cart.getProductOption())
                 .productPrice(Long.valueOf(productService.selectPriceByUserRole(product, cart.getUser())))
                 .quantity(cart.getQuantity())
+                .productOptions(product.getOptions())
                 .build();
     }
 }
