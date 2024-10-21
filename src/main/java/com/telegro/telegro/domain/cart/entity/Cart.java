@@ -5,10 +5,6 @@ import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.mapping.ToOne;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @EqualsAndHashCode(callSuper = false)
 @Data
@@ -30,7 +26,10 @@ public class Cart extends BaseEntity {
     private Integer quantity;
 
     @Column
-    private String productOption;
+    private String selectOption;
+
+    @Column
+    private String inputOption;
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)

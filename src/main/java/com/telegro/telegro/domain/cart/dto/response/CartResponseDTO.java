@@ -19,7 +19,9 @@ public record CartResponseDTO(
         @Schema(description = "모델명")
         String productModel,
         @Schema(description = "선택한 옵션")
-        String productOption,
+        String selectOption,
+        @Schema(description = "기재한 옵션")
+        String inputOption,
         @Schema(description = "상품 금액")
         Long productPrice,
         @Schema(description = "주문 수량")
@@ -34,7 +36,8 @@ public record CartResponseDTO(
                 .coverImage(product.getCoverImage())
                 .productName(product.getProductName())
                 .productModel(product.getProductModel())
-                .productOption(cart.getProductOption())
+                .selectOption(cart.getSelectOption())
+                .inputOption(cart.getInputOption())
                 .productPrice(Long.valueOf(productService.selectPriceByUserRole(product, cart.getUser())))
                 .quantity(cart.getQuantity())
                 .productOptions(product.getOptions())

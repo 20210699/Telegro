@@ -42,7 +42,8 @@ public class CartService {
         List<Cart> carts = cartRepository.findByUserAndProduct(user, product);
 
         Cart cart = carts.stream()
-                .filter(existingCart -> existingCart.getProductOption().equals(request.productOption()))
+                .filter(existingCart -> existingCart.getSelectOption().equals(request.selectOption())
+                && existingCart.getInputOption().equals(request.inputOption()))
                 .findFirst()
                 .map(existingCart -> updateExistingCart(existingCart, request))
                 .orElseGet(() -> createNewCart(user, product, request));
@@ -63,7 +64,8 @@ public class CartService {
                 .user(user)
                 .product(product)
                 .quantity(request.quantity())
-                .productOption(request.productOption())
+                .selectOption(request.selectOption())
+                .inputOption(request.inputOption())
                 .build();
     }
 
@@ -107,7 +109,8 @@ public class CartService {
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
         List<Cart> existingCarts = cartRepository.findByUserAndProduct(cart.getUser(), cart.getProduct()).stream()
-                .filter(c -> !c.getId().equals(cart.getId()) && c.getProductOption().equals(request.productOption()))
+                .filter(c -> !c.getId().equals(cart.getId()) && c.getSelectOption().equals(request.selectOption())
+                && c.getInputOption().equals(request.inputOption()))
                 .toList();
 
         if (!existingCarts.isEmpty()) {
@@ -117,7 +120,8 @@ public class CartService {
             Cart updatedCart = cartRepository.save(existingCart);
             return CreatedCartDTO.builder().id(updatedCart.getId()).build();
         } else {
-            cart.setProductOption(request.productOption());
+            cart.setSelectOption(request.selectOption());
+            cart.setInputOption(request.inputOption());
             cart.setQuantity(request.quantity());
             Cart updatedCart = cartRepository.save(cart);
             return CreatedCartDTO.builder().id(updatedCart.getId()).build();
