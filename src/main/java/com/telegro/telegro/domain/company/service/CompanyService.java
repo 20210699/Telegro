@@ -62,7 +62,6 @@ public class CompanyService {
                 .role(company.getUser().getRole())
                 .userid(company.getUser().getUserId())
                 .username(company.getUser().getUsername())
-                .password(company.getUser().getPassword())
                 .phone(company.getUser().getPhone())
                 .email(company.getUser().getEmail())
                 .address(company.getUser().getAddress())

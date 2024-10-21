@@ -14,8 +14,6 @@ public record CompanyDetailDTO(
         String userid,
         @Schema(description = "회원 이름")
         String username,
-        @Schema(description = "비밀번호")
-        String password,
         @Schema(description = "전화번호")
         String phone,
         @Schema(description = "email")
