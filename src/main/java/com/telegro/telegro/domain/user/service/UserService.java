@@ -1,7 +1,5 @@
 package com.telegro.telegro.domain.user.service;
 
-import com.telegro.telegro.domain.company.controller.CompanyController;
-import com.telegro.telegro.domain.company.dto.response.CompanyDetailDTO;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.company.service.CompanyService;
@@ -53,7 +51,7 @@ public class UserService {
                 .zipCode(signUpUserInfoDto.getZipCode())
                 .totalPrice(0L)
                 .email(signUpUserInfoDto.getEmail())
-                .role(Role.MEMBER)
+                .role(signUpUserInfoDto.getRole() != null ? signUpUserInfoDto.getRole() : Role.MEMBER)
                 .password(passwordEncoder.encode(signUpUserInfoDto.getPassword()))
                 .build();
 
@@ -144,5 +142,41 @@ public class UserService {
         }
 
         userRepository.deleteById(userId);
+    }
+
+    @Transactional
+    public Long updateUser(Long userId, User request) {
+        User userToUpdate = userRepository.findById(userId)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if (request.getUsername() != null) {
+            userToUpdate.setUsername(request.getUsername());
+        }
+        if (request.getUserId() != null) {
+            userToUpdate.setUserId(request.getUserId());
+        }
+        if (request.getPassword() != null) {
+            userToUpdate.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        if (request.getRole() != null) {
+            userToUpdate.setRole(request.getRole());
+        }
+        if (request.getPhone() != null) {
+            userToUpdate.setPhone(request.getPhone());
+        }
+        if (request.getEmail() != null) {
+            userToUpdate.setEmail(request.getEmail());
+        }
+        if (request.getAddress() != null) {
+            userToUpdate.setAddress(request.getAddress());
+        }
+        if (request.getAddressDetail() != null) {
+            userToUpdate.setAddressDetail(request.getAddressDetail());
+        }
+        if (request.getZipCode() != null) {
+            userToUpdate.setZipCode(request.getZipCode());
+        }
+
+        return userRepository.save(userToUpdate).getId();
     }
 }

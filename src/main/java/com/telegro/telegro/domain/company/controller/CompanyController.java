@@ -29,7 +29,7 @@ public class CompanyController implements CompanyControllerDocs{
     public SuccessResponse<?> createCompany(Long id, CompanySignUpDTO companySignUpDTO) {
         validateAdminAccess(id);
         userService.signUp(companySignUpDTO.getSignUpUserInfoDto());
-        companyService.createCompany(companySignUpDTO.getCompanyRequestDTO());
+        companyService.createCompany(companySignUpDTO.getSignUpUserInfoDto().getUserid(),companySignUpDTO.getCompany());
         return SuccessResponse.of();
     }
 
