@@ -217,4 +217,19 @@ public class UserService {
 
         return CreateAddressDTO.builder().id(savedAddress.getId()).build();
     }
+
+    public void deleteAddress(Long id, Long addressId) {
+        User currentUser = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        DeliveryAddress deliveryAddress = deliveryAddressRepository.findById(addressId)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if(!deliveryAddress.getUser().getUserId().equals(currentUser.getUserId())){
+            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
+        }
+
+        deliveryAddressRepository.delete(deliveryAddress);
+
+    }
 }

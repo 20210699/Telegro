@@ -96,4 +96,10 @@ public class UserController implements UserControllerDocs{
         return SuccessResponse.of(userService.addDeliveryAddress(id, deliveryAddress));
     }
 
+    @DeleteMapping("/deleteAddress/{addressId}")
+    public SuccessResponse<Boolean> addDeliveryAddress(Long id, Long addressId) {
+        userService.deleteAddress(id, addressId);
+        return SuccessResponse.of();
+    }
+
 }
