@@ -3,6 +3,7 @@ package com.telegro.telegro.domain.product.service;
 import com.telegro.telegro.domain.product.dto.request.ProductRequestDTO;
 import com.telegro.telegro.domain.product.dto.response.CreatedProductDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
+import com.telegro.telegro.domain.product.dto.response.ProductListDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductResponseDTO;
 import com.telegro.telegro.domain.product.entity.Product;
 import com.telegro.telegro.domain.product.entity.enums.Category;
@@ -70,7 +71,7 @@ public class ProductService {
     }
 
     @Transactional
-    public List<ProductResponseDTO> getProducts(Long id, Category category, int page, int size) {
+    public ProductListDTO getProducts(Long id, Category category, int page, int size) {
 
         final User user;
         if (id != null) {
@@ -92,9 +93,14 @@ public class ProductService {
                     String price = selectPriceByUserRole(product, user);
                     return ProductResponseDTO.of(product, price);
                 })
-                .collect(Collectors.toList());
+                .toList();
 
-        return productDTOs;
+        return ProductListDTO.builder()
+                .isLast(products.isLast())
+                .totalElement(products.getTotalElements())
+                .totalPage(products.getTotalPages())
+                .products(productDTOs)
+                .build();
     }
 
     @Transactional
