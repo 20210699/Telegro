@@ -53,10 +53,10 @@ public interface UserControllerDocs {
     public SuccessResponse<CreateAddressDTO> addDeliveryAddress(@LoginInfo Long id, @RequestBody DeliveryAddress deliveryAddress);
 
     @Operation(summary = "배송지를 삭제합니다.")
-    @ApiResponse(responseCode = "200", description = "배송지 추가 성공")
+    @ApiResponse(responseCode = "200", description = "배송지 삭제 성공")
     public SuccessResponse<Boolean> addDeliveryAddress(@LoginInfo Long id, @PathVariable Long addressId);
 
-//    @Operation(summary = "배송지를 추가합니다.")
-//    @ApiResponse(responseCode = "200", description = "배송지 추가 성공")
-//    public SuccessResponse<CreateAddressDTO> addDeliveryAddress(@LoginInfo Long id, @RequestBody DeliveryAddress deliveryAddress);
+    @Operation(summary = "배송지를 수정합니다.")
+    @ApiResponse(responseCode = "200", description = "배송지 수정 성공")
+    public SuccessResponse<CreateAddressDTO> updateDeliveryAddress(@LoginInfo Long id, @PathVariable Long addressId, @RequestBody DeliveryAddress deliveryAddress);
 }

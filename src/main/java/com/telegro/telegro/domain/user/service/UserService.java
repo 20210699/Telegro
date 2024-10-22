@@ -138,7 +138,7 @@ public class UserService {
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
         if(!user.getRole().equals(Role.ADMIN) && !user.getRole().equals(Role.MEMBER)){
-            Optional company = companyRepository.findByUserId(userId);
+            Optional<Company> company = companyRepository.findByUserId(userId);
             if(company.isPresent()){
                 companyService.deleteCompany(userId);
             }
@@ -218,7 +218,7 @@ public class UserService {
         return CreateAddressDTO.builder().id(savedAddress.getId()).build();
     }
 
-    public void deleteAddress(Long id, Long addressId) {
+    public void deleteDeliveryAddress(Long id, Long addressId) {
         User currentUser = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
@@ -231,5 +231,35 @@ public class UserService {
 
         deliveryAddressRepository.delete(deliveryAddress);
 
+    }
+
+    public CreateAddressDTO updateDeliveryAddress(Long id, Long addressId, DeliveryAddress request) {
+        User currentUser = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+
+        DeliveryAddress existingAddress = deliveryAddressRepository.findById(addressId)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+
+        if (!existingAddress.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
+        }
+        if (request.getName() != null) {
+            existingAddress.setName(request.getName());
+        }
+        if (request.getAddress() != null) {
+            existingAddress.setAddress(request.getAddress());
+        }
+        if (request.getAddressDetail() != null) {
+            existingAddress.setAddressDetail(request.getAddressDetail());
+        }
+        if (request.getZipcode() != null) {
+            existingAddress.setZipcode(request.getZipcode());
+        }
+
+        DeliveryAddress updatedAddress = deliveryAddressRepository.save(existingAddress);
+
+        return CreateAddressDTO.builder().id(updatedAddress.getId()).build();
     }
 }

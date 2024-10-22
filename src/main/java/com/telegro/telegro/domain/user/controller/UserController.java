@@ -91,15 +91,20 @@ public class UserController implements UserControllerDocs{
         return SuccessResponse.of(userService.getMyPage(id));
     }
 
-    @PostMapping("/addAddress")
+    @PostMapping("/address")
     public SuccessResponse<CreateAddressDTO> addDeliveryAddress(Long id, DeliveryAddress deliveryAddress) {
         return SuccessResponse.of(userService.addDeliveryAddress(id, deliveryAddress));
     }
 
-    @DeleteMapping("/deleteAddress/{addressId}")
+    @DeleteMapping("/address/{addressId}")
     public SuccessResponse<Boolean> addDeliveryAddress(Long id, Long addressId) {
-        userService.deleteAddress(id, addressId);
+        userService.deleteDeliveryAddress(id, addressId);
         return SuccessResponse.of();
+    }
+
+    @PatchMapping("/address/{addressId}")
+    public SuccessResponse<CreateAddressDTO> updateDeliveryAddress(Long id, Long addressId, DeliveryAddress deliveryAddress) {
+        return SuccessResponse.of(userService.updateDeliveryAddress(id, addressId, deliveryAddress));
     }
 
 }
