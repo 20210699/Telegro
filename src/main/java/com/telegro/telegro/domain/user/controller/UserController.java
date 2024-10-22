@@ -6,9 +6,11 @@ import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.company.service.CompanyService;
 import com.telegro.telegro.domain.user.dto.request.UserRequestDTO;
+import com.telegro.telegro.domain.user.dto.response.CreateAddressDTO;
 import com.telegro.telegro.domain.user.dto.response.UserDetailDTO;
 import com.telegro.telegro.domain.user.dto.response.UserInfoDTO;
 import com.telegro.telegro.domain.user.dto.response.UserListDTO;
+import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.UserRepository;
@@ -87,6 +89,11 @@ public class UserController implements UserControllerDocs{
     @GetMapping("/my")
     public SuccessResponse<UserInfoDTO> getMyPage(Long id) {
         return SuccessResponse.of(userService.getMyPage(id));
+    }
+
+    @PostMapping("/addAddress")
+    public SuccessResponse<CreateAddressDTO> addDeliveryAddress(Long id, DeliveryAddress deliveryAddress) {
+        return SuccessResponse.of(userService.addDeliveryAddress(id, deliveryAddress));
     }
 
 }

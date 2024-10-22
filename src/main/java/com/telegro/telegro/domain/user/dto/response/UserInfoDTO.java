@@ -21,6 +21,6 @@ public record UserInfoDTO(
         @Schema(description = "이메일")
         String email,
         @Schema(description = "배송지 목록")
-        List<DeliveryAddress> addressList
+        List<DeliveryAddressDetailDTO> addressList
 ) {
 }

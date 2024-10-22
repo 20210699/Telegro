@@ -3,9 +3,11 @@ package com.telegro.telegro.domain.user.controller;
 import com.telegro.telegro.domain.company.dto.request.CompanySignUpDTO;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.user.dto.request.UserRequestDTO;
+import com.telegro.telegro.domain.user.dto.response.CreateAddressDTO;
 import com.telegro.telegro.domain.user.dto.response.UserDetailDTO;
 import com.telegro.telegro.domain.user.dto.response.UserInfoDTO;
 import com.telegro.telegro.domain.user.dto.response.UserListDTO;
+import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
@@ -45,4 +47,8 @@ public interface UserControllerDocs {
     @Operation(summary = "마이페이지를 조회합니다.")
     @ApiResponse(responseCode = "200", description = "마이페이지 조회 성공")
     public SuccessResponse<UserInfoDTO> getMyPage(@LoginInfo Long id);
+
+    @Operation(summary = "배송지를 추가합니다.")
+    @ApiResponse(responseCode = "200", description = "배송지 추가 성공")
+    public SuccessResponse<CreateAddressDTO> addDeliveryAddress(@LoginInfo Long id, @RequestBody DeliveryAddress deliveryAddress);
 }

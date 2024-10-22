@@ -3,12 +3,11 @@ package com.telegro.telegro.domain.user.service;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.company.service.CompanyService;
-import com.telegro.telegro.domain.user.dto.response.UserDTO;
-import com.telegro.telegro.domain.user.dto.response.UserDetailDTO;
-import com.telegro.telegro.domain.user.dto.response.UserInfoDTO;
-import com.telegro.telegro.domain.user.dto.response.UserListDTO;
+import com.telegro.telegro.domain.user.dto.response.*;
+import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
+import com.telegro.telegro.domain.user.repository.DeliveryAddressRepository;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.auth.dto.request.LoginRequestDto;
@@ -35,6 +34,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final CompanyService companyService;
     private final CompanyRepository companyRepository;
+    private final DeliveryAddressRepository deliveryAddressRepository;
 
     public void signUp(SignUpUserInfoDto signUpUserInfoDto) {
         User existUser = userRepository
@@ -187,13 +187,34 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
+        List<DeliveryAddressDetailDTO> addressDTOs = user.getDeliveryAddresses().stream()
+                .map(DeliveryAddressDetailDTO::of)
+                .toList();
+
         return UserInfoDTO.builder()
                 .id(user.getId())
                 .userName(user.getUsername())
                 .userId(user.getUserId())
                 .phone(user.getPhone())
                 .email(user.getEmail())
-                .addressList(user.getDeliveryAddresses())
+                .addressList(addressDTOs)
                 .build();
+    }
+
+    public CreateAddressDTO addDeliveryAddress(Long id, DeliveryAddress request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        DeliveryAddress address = DeliveryAddress.builder()
+                .name(request.getName())
+                .address(request.getAddress())
+                .addressDetail(request.getAddressDetail())
+                .zipcode(request.getZipcode())
+                .user(user)
+                .build();
+
+        DeliveryAddress savedAddress = deliveryAddressRepository.save(address);
+
+        return CreateAddressDTO.builder().id(savedAddress.getId()).build();
     }
 }
