@@ -189,9 +189,16 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
+        String key = getDefaultAddressKey(user.getId());
+        Long defaultAddressId = Optional.ofNullable(redisUtil.getData(key))
+                .map(Long::valueOf)
+                .orElse(null);
+
         List<DeliveryAddressDetailDTO> addressDTOs = user.getDeliveryAddresses().stream()
-                .map((DeliveryAddress deliveryAddress)
-                        -> DeliveryAddressDetailDTO.of(deliveryAddress, Long.valueOf(redisUtil.getData("default_address_id" + user.getUserId())).equals(deliveryAddress.getId())))
+                .map(deliveryAddress ->
+                        DeliveryAddressDetailDTO.of(deliveryAddress,
+                                Optional.ofNullable(defaultAddressId)
+                                        .map(addressId -> addressId.equals(deliveryAddress.getId())).orElse(false)))
                 .toList();
 
         return UserInfoDTO.builder()
@@ -272,13 +279,13 @@ public class UserService {
 
         deliveryAddressRepository.findById(addressId).orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
-        String key = "default_address_id" + user.getUserId();
-
-        if (redisUtil.existData(key)) {
-            redisUtil.deleteData(key);
-        }
-
+        String key = getDefaultAddressKey(user.getId());
         redisUtil.setData(key, addressId.toString());
+
         log.info("사용자 {}의 기본 배송지가 배송지 ID {}로 설정되었습니다.", user.getUsername(), addressId);
+    }
+
+    private String getDefaultAddressKey(Long userId) {
+        return "default_address_id_" + userId;
     }
 }
