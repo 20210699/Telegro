@@ -5,6 +5,7 @@ import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.company.service.CompanyService;
 import com.telegro.telegro.domain.user.dto.response.UserDTO;
 import com.telegro.telegro.domain.user.dto.response.UserDetailDTO;
+import com.telegro.telegro.domain.user.dto.response.UserInfoDTO;
 import com.telegro.telegro.domain.user.dto.response.UserListDTO;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
@@ -180,5 +181,19 @@ public class UserService {
         }
 
         return userRepository.save(userToUpdate).getId();
+    }
+
+    public UserInfoDTO getMyPage(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        return UserInfoDTO.builder()
+                .id(user.getId())
+                .userName(user.getUsername())
+                .userId(user.getUserId())
+                .phone(user.getPhone())
+                .email(user.getEmail())
+                .addressList(user.getDeliveryAddresses())
+                .build();
     }
 }

@@ -7,6 +7,7 @@ import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.company.service.CompanyService;
 import com.telegro.telegro.domain.user.dto.request.UserRequestDTO;
 import com.telegro.telegro.domain.user.dto.response.UserDetailDTO;
+import com.telegro.telegro.domain.user.dto.response.UserInfoDTO;
 import com.telegro.telegro.domain.user.dto.response.UserListDTO;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
@@ -83,9 +84,9 @@ public class UserController implements UserControllerDocs{
         return SuccessResponse.of(updatedUserId);
     }
 
-    @Override
+    @GetMapping("/my")
     public SuccessResponse<UserInfoDTO> getMyPage(Long id) {
-        return null;
+        return SuccessResponse.of(userService.getMyPage(id));
     }
 
 }
