@@ -3,6 +3,7 @@ package com.telegro.telegro.domain.product.controller;
 import com.telegro.telegro.domain.product.dto.request.ProductRequestDTO;
 import com.telegro.telegro.domain.product.dto.response.CreatedProductDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
+import com.telegro.telegro.domain.product.dto.response.ProductListDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductResponseDTO;
 import com.telegro.telegro.domain.product.entity.enums.Category;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
@@ -27,7 +28,7 @@ public interface ProductControllerDocs {
 
     @Operation(description = "상품 목록을 조회합니다.")
     @ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
-    public SuccessResponse<List<ProductResponseDTO>> getProducts(
+    public SuccessResponse<ProductListDTO> getProducts(
             @LoginInfo Long id,
             @RequestParam(value = "category") Category category,
             @RequestParam(value = "page") int page,
