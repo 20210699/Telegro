@@ -2,6 +2,7 @@ package com.telegro.telegro.domain.company.controller;
 
 import com.telegro.telegro.domain.company.dto.request.CompanyRequestDTO;
 import com.telegro.telegro.domain.company.dto.request.CompanySignUpDTO;
+import com.telegro.telegro.domain.company.dto.response.CompanyDetailDTO;
 import com.telegro.telegro.domain.company.service.CompanyService;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
@@ -24,17 +25,24 @@ public class CompanyController implements CompanyControllerDocs{
     private final CompanyService companyService;
     private final UserService userService;
     private final UserRepository userRepository;
-    @PostMapping()
+
+    @PostMapping
     public SuccessResponse<?> createCompany(Long id, CompanySignUpDTO companySignUpDTO) {
         validateAdminAccess(id);
         userService.signUp(companySignUpDTO.getSignUpUserInfoDto());
-        companyService.createCompany(companySignUpDTO.getCompanyRequestDTO());
+        companyService.createCompany(companySignUpDTO.getSignUpUserInfoDto().getUserid(),companySignUpDTO.getCompany());
         return SuccessResponse.of();
     }
-    @DeleteMapping()
-    public SuccessResponse<?> deleteCompany(Long id, Long companyId) {
+
+    @GetMapping
+    public SuccessResponse<CompanyDetailDTO> getCompanyDetail(Long id) {
+        return SuccessResponse.of(companyService.getCompanyDetail(id));
+    }
+
+    @DeleteMapping("/{userId}")
+    public SuccessResponse<?> deleteCompany(Long id, Long userId) {
         validateAdminAccess(id);
-        companyService.deleteCompany(companyId);
+        companyService.deleteCompany(userId);
         return SuccessResponse.of();
     }
 

@@ -45,11 +45,11 @@ public class User extends BaseEntity {
     private String zipCode;
 
     @Column
-    private double totalPrice;
+    private Long totalPrice;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DeliveryAddress> deliveryAddresses;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> orders;
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Order> orders;
 }

@@ -1,5 +1,6 @@
 package com.telegro.telegro.domain.company.dto.request;
 
+import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.global.auth.dto.response.SignUpUserInfoDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -12,5 +13,5 @@ import java.util.List;
 @Builder
 public class CompanySignUpDTO {
     SignUpUserInfoDto signUpUserInfoDto;
-    CompanyRequestDTO companyRequestDTO;
+    Company company;
 }

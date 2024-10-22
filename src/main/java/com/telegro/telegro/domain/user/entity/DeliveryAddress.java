@@ -21,6 +21,9 @@ public class DeliveryAddress extends BaseEntity {
     private String address;
 
     @Column
+    private String addressDetail;
+
+    @Column
     private String zipcode;
 
     @ManyToOne(fetch = FetchType.LAZY)
