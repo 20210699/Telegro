@@ -2,6 +2,7 @@ package com.telegro.telegro.domain.cart.dto.response;
 
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.product.entity.Product;
+import com.telegro.telegro.domain.product.entity.enums.Category;
 import com.telegro.telegro.domain.product.service.ProductService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -14,6 +15,8 @@ public record CartResponseDTO(
         Long id,
         @Schema(description = "상품 대표이미지")
         String coverImage,
+        @Schema(description = "상품 카테고리")
+        Category productCategory,
         @Schema(description = "상품명")
         String productName,
         @Schema(description = "모델명")
@@ -34,6 +37,7 @@ public record CartResponseDTO(
         return CartResponseDTO.builder()
                 .id(cart.getId())
                 .coverImage(product.getCoverImage())
+                .productCategory(product.getCategory())
                 .productName(product.getProductName())
                 .productModel(product.getProductModel())
                 .selectOption(cart.getSelectOption())
