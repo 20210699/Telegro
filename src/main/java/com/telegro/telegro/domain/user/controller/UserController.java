@@ -47,7 +47,6 @@ public class UserController implements UserControllerDocs{
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
-        // Todo : 공급 업체의 정보를 지우면 user.Role을 member로 수정해야하나?
         if(companyRepository.findByUserId(user.getId()).isPresent()){
             return SuccessResponse.of(companyService.getCompanyDetail(userId));
         }
