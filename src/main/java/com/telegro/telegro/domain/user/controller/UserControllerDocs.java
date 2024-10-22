@@ -4,6 +4,7 @@ import com.telegro.telegro.domain.company.dto.request.CompanySignUpDTO;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.user.dto.request.UserRequestDTO;
 import com.telegro.telegro.domain.user.dto.response.UserDetailDTO;
+import com.telegro.telegro.domain.user.dto.response.UserInfoDTO;
 import com.telegro.telegro.domain.user.dto.response.UserListDTO;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
@@ -40,4 +41,8 @@ public interface UserControllerDocs {
     @Operation(summary = "회원 정보를 수정합니다.")
     @ApiResponse(responseCode = "200", description = "회원 정보 수정 성공")
     public SuccessResponse<Long> updateUser(@LoginInfo Long id, @PathVariable Long userId, @RequestBody UserRequestDTO request);
+
+    @Operation(summary = "마이페이지를 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "마이페이지 조회 성공")
+    public SuccessResponse<UserInfoDTO> getMyPage(@LoginInfo Long id);
 }

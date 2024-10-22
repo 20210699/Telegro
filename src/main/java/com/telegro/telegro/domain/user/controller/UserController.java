@@ -80,8 +80,12 @@ public class UserController implements UserControllerDocs{
                             () -> companyService.createCompany(requestDTO.getUser().getUserId(), requestDTO.getCompany())
                     );
         }
-
         return SuccessResponse.of(updatedUserId);
+    }
+
+    @Override
+    public SuccessResponse<UserInfoDTO> getMyPage(Long id) {
+        return null;
     }
 
 }
