@@ -25,7 +25,8 @@ public class CompanyController implements CompanyControllerDocs{
     private final CompanyService companyService;
     private final UserService userService;
     private final UserRepository userRepository;
-    @PostMapping()
+
+    @PostMapping
     public SuccessResponse<?> createCompany(Long id, CompanySignUpDTO companySignUpDTO) {
         validateAdminAccess(id);
         userService.signUp(companySignUpDTO.getSignUpUserInfoDto());

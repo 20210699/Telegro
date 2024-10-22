@@ -59,7 +59,7 @@ public class CompanyService {
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
         return CompanyDetailDTO.builder()
-                .id(company.getId())
+                .id(company.getUser().getId())
                 .role(company.getUser().getRole())
                 .userid(company.getUser().getUserId())
                 .username(company.getUser().getUsername())

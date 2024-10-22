@@ -47,7 +47,7 @@ public class UserController implements UserControllerDocs{
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
-        if(!user.getRole().equals(Role.ADMIN) && !user.getRole().equals(Role.MEMBER)){
+        if(companyRepository.findByUserId(user.getId()).isPresent()){
             return SuccessResponse.of(companyService.getCompanyDetail(userId));
         }
 
