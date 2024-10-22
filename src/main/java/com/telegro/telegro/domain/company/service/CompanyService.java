@@ -78,14 +78,14 @@ public class CompanyService {
     }
 
     @Transactional
-    public void deleteCompany(Long companyId){
-        Optional<Company> optionalCompany = companyRepository.findById(companyId);
+    public void deleteCompany(Long userId){
+        Optional<Company> optionalCompany = companyRepository.findByUserId(userId);
         if (!optionalCompany.isPresent()) {
             throw CustomException.of(Error.NOT_FOUND_ERROR);
         }
 
         try {
-            companyRepository.deleteById(companyId);
+            companyRepository.deleteById(optionalCompany.get().getId());
         } catch (Exception e) {
             log.error("Exception while deleting company: {}", e.getMessage());
             throw new RuntimeException("fail to delete company");

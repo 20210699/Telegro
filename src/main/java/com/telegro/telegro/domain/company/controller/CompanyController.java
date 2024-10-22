@@ -38,10 +38,10 @@ public class CompanyController implements CompanyControllerDocs{
         return SuccessResponse.of(companyService.getCompanyDetail(id));
     }
 
-    @DeleteMapping()
-    public SuccessResponse<?> deleteCompany(Long id, Long companyId) {
+    @DeleteMapping("/{userId}")
+    public SuccessResponse<?> deleteCompany(Long id, Long userId) {
         validateAdminAccess(id);
-        companyService.deleteCompany(companyId);
+        companyService.deleteCompany(userId);
         return SuccessResponse.of();
     }
 

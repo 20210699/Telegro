@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -136,9 +137,10 @@ public class UserService {
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
         if(!user.getRole().equals(Role.ADMIN) && !user.getRole().equals(Role.MEMBER)){
-            Company company = companyRepository.findByUserId(userId)
-                    .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
-            companyService.deleteCompany(company.getId());
+            Optional company = companyRepository.findByUserId(userId);
+            if(company.isPresent()){
+                companyService.deleteCompany(userId);
+            }
         }
 
         userRepository.deleteById(userId);

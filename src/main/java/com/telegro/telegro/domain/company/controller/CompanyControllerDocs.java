@@ -8,6 +8,7 @@ import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -21,6 +22,5 @@ public interface CompanyControllerDocs {
     public SuccessResponse<CompanyDetailDTO> getCompanyDetail(@LoginInfo Long id);
 
     @Operation(summary = "공급 업체를 삭제합니다.")
-    public SuccessResponse<?> deleteCompany(@LoginInfo Long id, @RequestParam(value = "id", required = true)
-                                                @Parameter(description = "공급업체 id") Long companyId);
+    public SuccessResponse<?> deleteCompany(@LoginInfo Long id, @PathVariable Long userId);
 }
