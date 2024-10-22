@@ -6,8 +6,11 @@ import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.company.service.CompanyService;
 import com.telegro.telegro.domain.user.dto.request.UserRequestDTO;
+import com.telegro.telegro.domain.user.dto.response.CreateAddressDTO;
 import com.telegro.telegro.domain.user.dto.response.UserDetailDTO;
+import com.telegro.telegro.domain.user.dto.response.UserInfoDTO;
 import com.telegro.telegro.domain.user.dto.response.UserListDTO;
+import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.UserRepository;
@@ -80,8 +83,34 @@ public class UserController implements UserControllerDocs{
                             () -> companyService.createCompany(requestDTO.getUser().getUserId(), requestDTO.getCompany())
                     );
         }
-
         return SuccessResponse.of(updatedUserId);
+    }
+
+    @GetMapping("/my")
+    public SuccessResponse<UserInfoDTO> getMyPage(Long id) {
+        return SuccessResponse.of(userService.getMyPage(id));
+    }
+
+    @PostMapping("/address")
+    public SuccessResponse<CreateAddressDTO> addDeliveryAddress(Long id, DeliveryAddress deliveryAddress) {
+        return SuccessResponse.of(userService.addDeliveryAddress(id, deliveryAddress));
+    }
+
+    @DeleteMapping("/address/{addressId}")
+    public SuccessResponse<Boolean> addDeliveryAddress(Long id, Long addressId) {
+        userService.deleteDeliveryAddress(id, addressId);
+        return SuccessResponse.of();
+    }
+
+    @PatchMapping("/address/{addressId}")
+    public SuccessResponse<CreateAddressDTO> updateDeliveryAddress(Long id, Long addressId, DeliveryAddress deliveryAddress) {
+        return SuccessResponse.of(userService.updateDeliveryAddress(id, addressId, deliveryAddress));
+    }
+
+    @PostMapping("/address/{addressId}/set-default")
+    public SuccessResponse<Boolean> setDefaultDeliveryAddress(Long id, Long addressId) {
+        userService.setDefaultDeliveryAddress(id, addressId);
+        return SuccessResponse.of();
     }
 
 }
