@@ -59,4 +59,8 @@ public interface UserControllerDocs {
     @Operation(summary = "배송지를 수정합니다.")
     @ApiResponse(responseCode = "200", description = "배송지 수정 성공")
     public SuccessResponse<CreateAddressDTO> updateDeliveryAddress(@LoginInfo Long id, @PathVariable Long addressId, @RequestBody DeliveryAddress deliveryAddress);
+
+    @Operation(summary = "기본 배송지를 설정합니다.")
+    @ApiResponse(responseCode = "200", description = "기본 배송지 설정 성공")
+    public SuccessResponse<Boolean> setDefaultDeliveryAddress(@LoginInfo Long id, @PathVariable Long addressId);
 }

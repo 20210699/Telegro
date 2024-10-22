@@ -107,4 +107,10 @@ public class UserController implements UserControllerDocs{
         return SuccessResponse.of(userService.updateDeliveryAddress(id, addressId, deliveryAddress));
     }
 
+    @PostMapping("/address/{addressId}/set-default")
+    public SuccessResponse<Boolean> setDefaultDeliveryAddress(Long id, Long addressId) {
+        userService.setDefaultDeliveryAddress(id, addressId);
+        return SuccessResponse.of();
+    }
+
 }

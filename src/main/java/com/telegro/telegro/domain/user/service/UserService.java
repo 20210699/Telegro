@@ -12,6 +12,7 @@ import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.auth.dto.request.LoginRequestDto;
 import com.telegro.telegro.global.auth.dto.response.SignUpUserInfoDto;
+import com.telegro.telegro.global.common.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
@@ -35,6 +36,7 @@ public class UserService {
     private final CompanyService companyService;
     private final CompanyRepository companyRepository;
     private final DeliveryAddressRepository deliveryAddressRepository;
+    private final RedisUtil redisUtil;
 
     public void signUp(SignUpUserInfoDto signUpUserInfoDto) {
         User existUser = userRepository
@@ -188,7 +190,8 @@ public class UserService {
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
         List<DeliveryAddressDetailDTO> addressDTOs = user.getDeliveryAddresses().stream()
-                .map(DeliveryAddressDetailDTO::of)
+                .map((DeliveryAddress deliveryAddress)
+                        -> DeliveryAddressDetailDTO.of(deliveryAddress, Long.valueOf(redisUtil.getData("default_address_id" + user.getUserId())).equals(deliveryAddress.getId())))
                 .toList();
 
         return UserInfoDTO.builder()
@@ -261,5 +264,21 @@ public class UserService {
         DeliveryAddress updatedAddress = deliveryAddressRepository.save(existingAddress);
 
         return CreateAddressDTO.builder().id(updatedAddress.getId()).build();
+    }
+
+    public void setDefaultDeliveryAddress(Long id, Long addressId) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        deliveryAddressRepository.findById(addressId).orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        String key = "default_address_id" + user.getUserId();
+
+        if (redisUtil.existData(key)) {
+            redisUtil.deleteData(key);
+        }
+
+        redisUtil.setData(key, addressId.toString());
+        log.info("사용자 {}의 기본 배송지가 배송지 ID {}로 설정되었습니다.", user.getUsername(), addressId);
     }
 }
