@@ -3,6 +3,7 @@ package com.telegro.telegro.domain.product.service;
 import com.telegro.telegro.domain.product.dto.request.ProductRequestDTO;
 import com.telegro.telegro.domain.product.dto.response.CreatedProductDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
+import com.telegro.telegro.domain.product.dto.response.ProductListDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductResponseDTO;
 import com.telegro.telegro.domain.product.entity.Product;
 import com.telegro.telegro.domain.product.entity.enums.Category;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -69,7 +71,7 @@ public class ProductService {
     }
 
     @Transactional
-    public List<ProductResponseDTO> getProducts(Long id, Category category, int page, int size) {
+    public ProductListDTO getProducts(Long id, Category category, int page, int size) {
 
         final User user;
         if (id != null) {
@@ -86,13 +88,19 @@ public class ProductService {
         }
 
         // Product를 ProductResponseDTO로 변환
-        return products.stream()
+        List<ProductResponseDTO> productDTOs = products.stream()
                 .map(product -> {
                     String price = selectPriceByUserRole(product, user);
                     return ProductResponseDTO.of(product, price);
                 })
-                .collect(Collectors.toList());
+                .toList();
 
+        return ProductListDTO.builder()
+                .isLast(products.isLast())
+                .totalElement(products.getTotalElements())
+                .totalPage(products.getTotalPages())
+                .products(productDTOs)
+                .build();
     }
 
     @Transactional
@@ -210,9 +218,10 @@ public class ProductService {
                 .build();
     }
 
-    public String selectPriceByUserRole(Product product, User user) {
 
-        if(user == null) {
+    public String selectPriceByUserRole(Product product, User user) {
+        if (user == null) {
+            // 로그인하지 않은 사용자는 'Customer' 가격을 보여줌
             return product.getPriceCustomer();
         }
 

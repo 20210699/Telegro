@@ -3,6 +3,7 @@ package com.telegro.telegro.domain.product.controller;
 import com.telegro.telegro.domain.product.dto.request.ProductRequestDTO;
 import com.telegro.telegro.domain.product.dto.response.CreatedProductDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
+import com.telegro.telegro.domain.product.dto.response.ProductListDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductResponseDTO;
 import com.telegro.telegro.domain.product.entity.enums.Category;
 import com.telegro.telegro.domain.product.service.ProductService;
@@ -23,7 +24,7 @@ public class ProductController implements ProductControllerDocs{
     private final ProductService productService;
 
     @GetMapping("/products")
-    public SuccessResponse<List<ProductResponseDTO>> getProducts(Long id, Category category, int page, int size) {
+    public SuccessResponse<ProductListDTO> getProducts(Long id, Category category, int page, int size) {
         return SuccessResponse.of(productService.getProducts(id, category, page, size));
     }
 
