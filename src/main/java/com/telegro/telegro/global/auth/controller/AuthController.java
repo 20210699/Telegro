@@ -1,12 +1,15 @@
 package com.telegro.telegro.global.auth.controller;
 
 import com.telegro.telegro.domain.user.service.UserService;
+import com.telegro.telegro.domain.user.service.VisitService;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import com.telegro.telegro.global.auth.dto.request.LoginRequestDto;
 import com.telegro.telegro.global.auth.dto.request.SignUpRequestDto;
 import com.telegro.telegro.global.auth.dto.response.LoginDto;
 import com.telegro.telegro.global.auth.dto.response.SignUpUserInfoDto;
 import com.telegro.telegro.global.auth.jwt.JWTUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,14 +26,17 @@ public class AuthController implements AuthControllerDocs {
 
   private final UserService userService;
   private final JWTUtil jwtUtil;
+  private final VisitService visitService;
 
   @PostMapping("/login")
-  public SuccessResponse<LoginDto> login(LoginRequestDto loginRequestDto) {
+  public SuccessResponse<LoginDto> login(LoginRequestDto loginRequestDto, HttpServletRequest request, HttpServletResponse response) {
       Long id = userService.getUserId(loginRequestDto);
       String jwtToken = jwtUtil.createJwt(id, 60 * 60 * 60 * 1000L);
 
+      visitService.mergeAnonymousVisitToUser(request, response, id);
+
       LoginDto loginDto = LoginDto.builder()
-              .accessToken(jwtToken).build();
+              .accessToken(jwtToken).build();;
 
       return SuccessResponse.of(loginDto);
   }

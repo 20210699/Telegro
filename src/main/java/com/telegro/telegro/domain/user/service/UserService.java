@@ -3,16 +3,23 @@ package com.telegro.telegro.domain.user.service;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.company.service.CompanyService;
+import com.telegro.telegro.domain.user.dto.HitListDTO;
+import com.telegro.telegro.domain.user.dto.hitDTO;
 import com.telegro.telegro.domain.user.dto.response.*;
 import com.telegro.telegro.domain.user.entity.DeliveryAddress;
+import com.telegro.telegro.domain.user.entity.Hit;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.DeliveryAddressRepository;
+import com.telegro.telegro.domain.user.repository.HitRepository;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.auth.dto.request.LoginRequestDto;
 import com.telegro.telegro.global.auth.dto.response.SignUpUserInfoDto;
+import com.telegro.telegro.global.common.CookieUtil;
 import com.telegro.telegro.global.common.RedisUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
@@ -23,6 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,6 +45,7 @@ public class UserService {
     private final CompanyRepository companyRepository;
     private final DeliveryAddressRepository deliveryAddressRepository;
     private final RedisUtil redisUtil;
+    private final HitRepository hitRepository;
 
     public void signUp(SignUpUserInfoDto signUpUserInfoDto) {
         User existUser = userRepository
@@ -288,4 +297,5 @@ public class UserService {
     private String getDefaultAddressKey(Long userId) {
         return "default_address_id_" + userId;
     }
+
 }
