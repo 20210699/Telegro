@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -176,6 +178,48 @@ public class VisitService {
         }
 
         return monthlyHits;
+    }
+
+    public List<hitDTO> getWeeklyHits(int year, Integer month) {
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        // 데이터베이스에서 해당 월의 데이터를 가져옵니다.
+        List<Hit> hits = hitRepository.findByDateBetween(startDate, endDate);
+
+        // 총 월 접속량 계산
+        int totalMonthlyHits = hits.stream()
+                .mapToInt(Hit::getHitCount)
+                .sum();
+
+        // 요일별 접속량을 저장할 맵 초기화
+        Map<DayOfWeek, Integer> weeklyHitMap = new HashMap<>();
+        for (DayOfWeek day : DayOfWeek.values()) {
+            weeklyHitMap.put(day, 0);
+        }
+
+        // 조회된 데이터를 요일별로 합산합니다.
+        for (Hit hit : hits) {
+            DayOfWeek dayOfWeek = hit.getDate().getDayOfWeek();
+            weeklyHitMap.put(dayOfWeek, weeklyHitMap.get(dayOfWeek) + hit.getHitCount());
+        }
+
+        // 요일별 접속량 정보를 hitDTO 리스트로 변환하여 반환 (월요일부터 순차 정렬)
+        return weeklyHitMap.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey()) // 요일을 월요일부터 일요일 순으로 정렬
+                .map(entry -> {
+                    int dayHitCount = entry.getValue();
+                    double percentage = totalMonthlyHits > 0
+                            ? Math.round(dayHitCount / (double) totalMonthlyHits * 100 * 100) / 100.0
+                            : 0.0;
+
+                    return hitDTO.builder()
+                            .name(entry.getKey().getDisplayName(TextStyle.FULL, Locale.getDefault())) // 요일 이름
+                            .hit(dayHitCount)
+                            .percentage(percentage) // 요일별 접속량 비율 설정
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 
 }

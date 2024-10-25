@@ -50,9 +50,9 @@ public class DashBoardController implements DashBoardControllerDocs{
             case "monthly":
                 hitList = visitService.getMonthlyHits(year);
                 break;
-//            case "weekly":
-//                hitList = visitService.getWeeklyHits(id, year, month);
-//                break;
+            case "weekly":
+                hitList = visitService.getWeeklyHits(year, month);
+                break;
 //            case "company":
 //                hitList = visitService.getCompanyHits(id);
 //                break;
