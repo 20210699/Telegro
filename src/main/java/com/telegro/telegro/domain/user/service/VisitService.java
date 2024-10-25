@@ -100,7 +100,7 @@ public class VisitService {
         }
     }
 
-    public List<hitDTO> getDailyHits(Long id, int year, int month) {
+    public List<hitDTO> getDailyHits(Long id, int year, Integer month) {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
@@ -122,6 +122,47 @@ public class VisitService {
                         .percentage(String.format("%.2f", hitMap.getOrDefault(date, 0) / (double) startDate.lengthOfMonth() * 100))
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    public List<hitDTO> getMonthlyHits(Long id, int year) {
+        // 연도 전체의 데이터 가져오기
+        LocalDate startOfYear = LocalDate.of(year, 1, 1);
+        LocalDate endOfYear = LocalDate.of(year, 12, 31);
+        List<Hit> yearlyHits = hitRepository.findByDateBetween(startOfYear, endOfYear);
+
+        // 연도의 총 접속량 계산
+        int totalYearlyHits = yearlyHits.stream()
+                .mapToInt(Hit::getHitCount)
+                .sum();
+
+        // 월별 데이터 및 비율 계산
+        List<hitDTO> monthlyHits = new ArrayList<>();
+        for (int month = 1; month <= 12; month++) {
+            LocalDate startDate = LocalDate.of(year, month, 1);
+            LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+            // 해당 월의 데이터 가져오기
+            List<Hit> monthlyData = hitRepository.findByDateBetween(startDate, endDate);
+
+            // 월별 총 접속량 계산
+            int monthlyHitCount = monthlyData.stream()
+                    .mapToInt(Hit::getHitCount)
+                    .sum();
+
+            // 월별 접속량 비율 계산
+            double percentage = totalYearlyHits > 0
+                    ? (monthlyHitCount / (double) totalYearlyHits) * 100
+                    : 0.0;
+
+            // 월별 접속량 정보를 hitDTO로 추가
+            monthlyHits.add(hitDTO.builder()
+                    .name(month + "월")
+                    .hit(monthlyHitCount)
+                    .percentage(String.valueOf(Math.round(percentage * 100) / 100.0)) // 소수점 둘째 자리까지 반올림
+                    .build());
+        }
+
+        return monthlyHits;
     }
 
 }

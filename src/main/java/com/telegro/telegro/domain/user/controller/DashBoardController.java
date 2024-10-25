@@ -2,9 +2,13 @@ package com.telegro.telegro.domain.user.controller;
 
 import com.telegro.telegro.domain.user.dto.HitListDTO;
 import com.telegro.telegro.domain.user.dto.hitDTO;
+import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
+import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.domain.user.service.UserService;
 import com.telegro.telegro.domain.user.service.VisitService;
+import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
+import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DashBoardController implements DashBoardControllerDocs{
     private final VisitService visitService;
+    private final UserRepository userRepository;
 
     @PostMapping("/hits")
     public SuccessResponse<Boolean> recordHits(HttpServletRequest request, HttpServletResponse response) {
@@ -29,16 +34,22 @@ public class DashBoardController implements DashBoardControllerDocs{
     }
 
     @GetMapping("/api/hits")
-    public SuccessResponse<HitListDTO> getHits(Long id, String filteredBy, int year, int month) {
-        // 필터에 따른 데이터 조회 로직 구현
+    public SuccessResponse<HitListDTO> getHits(Long id, String filteredBy, int year, Integer month) {
+        User user  = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if(!user.getRole().equals(Role.ADMIN)){
+            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
+        }
+
         List<hitDTO> hitList;
         switch (filteredBy != null ? filteredBy : "daily") {
             case "daily":
                 hitList = visitService.getDailyHits(id, year, month);
                 break;
-//            case "monthly":
-//                hitList = visitService.getMonthlyHits(id, year);
-//                break;
+            case "monthly":
+                hitList = visitService.getMonthlyHits(id, year);
+                break;
 //            case "weekly":
 //                hitList = visitService.getWeeklyHits(id, year, month);
 //                break;
