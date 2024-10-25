@@ -6,6 +6,6 @@ import lombok.Builder;
 public record hitDTO(
         String name,
         Integer hit,
-        double percentage
+        String percentage
 ) {
 }

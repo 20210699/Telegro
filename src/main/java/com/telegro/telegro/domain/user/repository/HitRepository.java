@@ -1,5 +1,6 @@
 package com.telegro.telegro.domain.user.repository;
 
+import com.telegro.telegro.domain.user.dto.hitDTO;
 import com.telegro.telegro.domain.user.entity.Hit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -19,4 +20,5 @@ public interface HitRepository extends JpaRepository<Hit, Long> {
 
     // 날짜별 모든 방문 기록 조회 (관리자 분석용)
     Optional<List<Hit>> findByDate(LocalDate date);
+    List<Hit> findByDateBetween(LocalDate startDate, LocalDate endDate);
 }

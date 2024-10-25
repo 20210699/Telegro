@@ -13,8 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDateTime;
-
 public interface DashBoardControllerDocs {
     @Operation(summary = "상점 접속을 기록합니다.")
     @ApiResponse(responseCode = "200", description = "상점 접속 기록 성공")

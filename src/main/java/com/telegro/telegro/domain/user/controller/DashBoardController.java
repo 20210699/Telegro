@@ -1,6 +1,7 @@
 package com.telegro.telegro.domain.user.controller;
 
 import com.telegro.telegro.domain.user.dto.HitListDTO;
+import com.telegro.telegro.domain.user.dto.hitDTO;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.service.UserService;
 import com.telegro.telegro.domain.user.service.VisitService;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping
@@ -27,7 +30,38 @@ public class DashBoardController implements DashBoardControllerDocs{
 
     @GetMapping("/api/hits")
     public SuccessResponse<HitListDTO> getHits(Long id, String filteredBy, int year, int month) {
-//        return SuccessResponse.of(visitService.getHits(id, filteredBy, year, month));
-        return null;
+        // 필터에 따른 데이터 조회 로직 구현
+        List<hitDTO> hitList;
+        switch (filteredBy != null ? filteredBy : "daily") {
+            case "daily":
+                hitList = visitService.getDailyHits(id, year, month);
+                break;
+//            case "monthly":
+//                hitList = visitService.getMonthlyHits(id, year);
+//                break;
+//            case "weekly":
+//                hitList = visitService.getWeeklyHits(id, year, month);
+//                break;
+//            case "company":
+//                hitList = visitService.getCompanyHits(id);
+//                break;
+            default:
+                throw new IllegalArgumentException("잘못된 필터 값입니다.");
+        }
+
+        // 평균 및 총 계 계산
+        double totalHit = hitList.stream().mapToDouble(hitDTO::hit).sum();
+        double averageHit = hitList.isEmpty() ? 0 : totalHit / hitList.size();
+//        double overAllTotalHit = visitService.getOverallTotalHits();
+
+        // 조회한 데이터를 DTO로 변환
+        HitListDTO hitListDTO = HitListDTO.builder()
+                .hits(hitList)
+                .averageHit(averageHit)
+                .totalHit(totalHit)
+//                .overAllTotalHit(overAllTotalHit)
+                .build();
+
+        return SuccessResponse.of(hitListDTO);
     }
 }
