@@ -27,6 +27,6 @@ public interface DashBoardControllerDocs {
                                                                          @ExampleObject(name = "월별", summary = "월별 조회", value = "monthly"),
                                                                          @ExampleObject(name = "요일별", summary = "요일별 조회", value = "weekly"),
                                                                          @ExampleObject(name = "업체별", summary = "업체별 조회", value = "company")}) String filteredBy,
-                                               @RequestParam(value = "year") int year, @RequestParam(value = "month", required = false) Integer month);
+                                               @RequestParam(value = "year", required = false) Integer year, @RequestParam(value = "month", required = false) Integer month);
 
 }

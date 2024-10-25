@@ -1,9 +1,11 @@
 package com.telegro.telegro.domain.user.service;
 
-import com.telegro.telegro.domain.user.dto.HitListDTO;
+import com.telegro.telegro.domain.company.entity.Company;
+import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.user.dto.hitDTO;
 import com.telegro.telegro.domain.user.entity.Hit;
 import com.telegro.telegro.domain.user.repository.HitRepository;
+import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.common.CookieUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +26,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class VisitService {
     private final HitRepository hitRepository;
+    private final CompanyRepository companyRepository;
+    private final UserRepository userRepository;
 
     public void recordAnonymousVisit(HttpServletRequest request, HttpServletResponse response) {
         LocalDate today = LocalDate.now();
@@ -102,124 +106,131 @@ public class VisitService {
         }
     }
 
-    public List<hitDTO> getDailyHits(int year, Integer month) {
+    public List<hitDTO> getDailyHits(int year, int month) {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-
-        // 데이터베이스에서 해당 월의 데이터를 가져옵니다.
         List<Hit> hits = hitRepository.findByDateBetween(startDate, endDate);
 
-        // 총 월 접속량 계산
-        int totalMonthlyHits = hits.stream()
-                .mapToInt(Hit::getHitCount)
-                .sum();
+        int totalMonthlyHits = getTotalHits(hits);
 
-        // 조회된 데이터를 날짜별로 매핑합니다. 중복 키가 있을 경우 hitCount 값을 합산합니다.
+        // 날짜별로 접속량을 합산하여 Map 생성
         Map<LocalDate, Integer> hitMap = hits.stream()
                 .collect(Collectors.toMap(
                         Hit::getDate,
                         Hit::getHitCount,
-                        Integer::sum  // 중복된 키가 있을 경우 hitCount를 합산하여 처리
+                        Integer::sum
                 ));
 
-        // 해당 월의 모든 날짜에 대해 hitDTO를 생성합니다.
         return startDate.datesUntil(endDate.plusDays(1))
-                .map(date -> {
-                    int dailyHitCount = hitMap.getOrDefault(date, 0);
-                    double percentage = totalMonthlyHits > 0
-                            ? Math.round(dailyHitCount / (double) totalMonthlyHits * 100 * 100) / 100.0
-                            : 0.0;
-
-                    return hitDTO.builder()
-                            .name(String.valueOf(date.getDayOfMonth()))
-                            .hit(dailyHitCount) // 데이터가 없으면 0을 기본값으로 설정합니다.
-                            .percentage(percentage)
-                            .build();
-                })
+                .map(date -> hitDTO.builder()
+                        .name(String.valueOf(date.getDayOfMonth()))
+                        .hit(hitMap.getOrDefault(date, 0))
+                        .percentage(calculatePercentage(hitMap.getOrDefault(date, 0), totalMonthlyHits))
+                        .build())
                 .collect(Collectors.toList());
     }
 
     public List<hitDTO> getMonthlyHits(int year) {
-        // 연도 전체의 데이터 가져오기
         LocalDate startOfYear = LocalDate.of(year, 1, 1);
         LocalDate endOfYear = LocalDate.of(year, 12, 31);
         List<Hit> yearlyHits = hitRepository.findByDateBetween(startOfYear, endOfYear);
 
-        // 연도의 총 접속량 계산
-        int totalYearlyHits = yearlyHits.stream()
-                .mapToInt(Hit::getHitCount)
-                .sum();
-
-        // 월별 데이터 및 비율 계산
+        int totalYearlyHits = getTotalHits(yearlyHits);
         List<hitDTO> monthlyHits = new ArrayList<>();
+
         for (int month = 1; month <= 12; month++) {
             LocalDate startDate = LocalDate.of(year, month, 1);
             LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-
-            // 해당 월의 데이터 가져오기
             List<Hit> monthlyData = hitRepository.findByDateBetween(startDate, endDate);
+            int monthlyHitCount = getTotalHits(monthlyData);
+            double percentage = calculatePercentage(monthlyHitCount, totalYearlyHits);
 
-            // 월별 총 접속량 계산
-            int monthlyHitCount = monthlyData.stream()
-                    .mapToInt(Hit::getHitCount)
-                    .sum();
-
-            // 월별 접속량 비율 계산
-            double percentage = totalYearlyHits > 0
-                    ? (monthlyHitCount / (double) totalYearlyHits) * 100
-                    : 0.0;
-
-            // 월별 접속량 정보를 hitDTO로 추가
             monthlyHits.add(hitDTO.builder()
                     .name(month + "월")
                     .hit(monthlyHitCount)
-                    .percentage(Math.round(percentage * 100) / 100.0) // 소수점 둘째 자리까지 반올림
+                    .percentage(percentage)
                     .build());
         }
 
         return monthlyHits;
     }
 
-    public List<hitDTO> getWeeklyHits(int year, Integer month) {
+    public List<hitDTO> getWeeklyHits(int year, int month) {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-
-        // 데이터베이스에서 해당 월의 데이터를 가져옵니다.
         List<Hit> hits = hitRepository.findByDateBetween(startDate, endDate);
 
-        // 총 월 접속량 계산
-        int totalMonthlyHits = hits.stream()
-                .mapToInt(Hit::getHitCount)
-                .sum();
+        int totalMonthlyHits = getTotalHits(hits);
+        Map<DayOfWeek, Integer> weeklyHitMap = initializeWeeklyMap();
 
-        // 요일별 접속량을 저장할 맵 초기화
-        Map<DayOfWeek, Integer> weeklyHitMap = new HashMap<>();
-        for (DayOfWeek day : DayOfWeek.values()) {
-            weeklyHitMap.put(day, 0);
-        }
-
-        // 조회된 데이터를 요일별로 합산합니다.
-        for (Hit hit : hits) {
+        hits.forEach(hit -> {
             DayOfWeek dayOfWeek = hit.getDate().getDayOfWeek();
-            weeklyHitMap.put(dayOfWeek, weeklyHitMap.get(dayOfWeek) + hit.getHitCount());
-        }
+            weeklyHitMap.merge(dayOfWeek, hit.getHitCount(), Integer::sum);
+        });
 
-        // 요일별 접속량 정보를 hitDTO 리스트로 변환하여 반환 (월요일부터 순차 정렬)
         return weeklyHitMap.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey()) // 요일을 월요일부터 일요일 순으로 정렬
+                .sorted(Map.Entry.comparingByKey())
                 .map(entry -> {
                     int dayHitCount = entry.getValue();
-                    double percentage = totalMonthlyHits > 0
-                            ? Math.round(dayHitCount / (double) totalMonthlyHits * 100 * 100) / 100.0
-                            : 0.0;
-
+                    double percentage = calculatePercentage(dayHitCount, totalMonthlyHits);
                     return hitDTO.builder()
-                            .name(entry.getKey().getDisplayName(TextStyle.FULL, Locale.getDefault())) // 요일 이름
+                            .name(entry.getKey().getDisplayName(TextStyle.FULL, Locale.getDefault()))
                             .hit(dayHitCount)
-                            .percentage(percentage) // 요일별 접속량 비율 설정
+                            .percentage(percentage)
                             .build();
                 })
                 .collect(Collectors.toList());
     }
 
+    public List<hitDTO> getCompanyHits() {
+        List<Hit> hits = hitRepository.findAll();
+        double totalHits = getOverallTotalHits();
+        Map<String, Integer> companyHitMap = new HashMap<>();
+
+        for (Hit hit : hits) {
+            String displayName = getDisplayName(hit);
+            companyHitMap.put(displayName, companyHitMap.getOrDefault(displayName, 0) + hit.getHitCount());
+        }
+
+        return companyHitMap.entrySet().stream()
+                .map(entry -> {
+                    int hitCount = entry.getValue();
+                    double percentage = calculatePercentage(hitCount, (int) totalHits);
+                    return hitDTO.builder()
+                            .name(entry.getKey())
+                            .hit(hitCount)
+                            .percentage(percentage)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    private int getTotalHits(List<Hit> hits) {
+        return hits.stream().mapToInt(Hit::getHitCount).sum();
+    }
+
+    private double calculatePercentage(int part, int total) {
+        return total > 0 ? Math.round((part / (double) total) * 100 * 100) / 100.0 : 0.0;
+    }
+
+    private Map<DayOfWeek, Integer> initializeWeeklyMap() {
+        return Arrays.stream(DayOfWeek.values())
+                .collect(Collectors.toMap(day -> day, day -> 0));
+    }
+
+    private String getDisplayName(Hit hit) {
+        if (hit.getUserId() == null || hit.getAnonymousUserId() != null) {
+            return "비회원";
+        }
+
+        return companyRepository.findByUserId(hit.getUserId())
+                .map(Company::getCompanyName)
+                .orElseGet(() -> userRepository.findById(hit.getUserId()).isPresent() ? "일반 회원" : "알 수 없음");
+    }
+
+    public int getOverallTotalHits() {
+        return hitRepository.findAll().stream()
+                .mapToInt(Hit::getHitCount)
+                .sum();
+    }
 }
