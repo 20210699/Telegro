@@ -100,13 +100,19 @@ public class VisitService {
         }
     }
 
-    public List<hitDTO> getDailyHits(Long id, int year, Integer month) {
+    public List<hitDTO> getDailyHits(int year, Integer month) {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
         // 데이터베이스에서 해당 월의 데이터를 가져옵니다.
         List<Hit> hits = hitRepository.findByDateBetween(startDate, endDate);
 
+        // 총 월 접속량 계산
+        int totalMonthlyHits = hits.stream()
+                .mapToInt(Hit::getHitCount)
+                .sum();
+
+        // 조회된 데이터를 날짜별로 매핑합니다. 중복 키가 있을 경우 hitCount 값을 합산합니다.
         Map<LocalDate, Integer> hitMap = hits.stream()
                 .collect(Collectors.toMap(
                         Hit::getDate,
@@ -116,15 +122,22 @@ public class VisitService {
 
         // 해당 월의 모든 날짜에 대해 hitDTO를 생성합니다.
         return startDate.datesUntil(endDate.plusDays(1))
-                .map(date -> hitDTO.builder()
-                        .name(String.valueOf(date.getDayOfMonth()))
-                        .hit(hitMap.getOrDefault(date, 0)) // 데이터가 없으면 0을 기본값으로 설정합니다.
-                        .percentage(String.format("%.2f", hitMap.getOrDefault(date, 0) / (double) startDate.lengthOfMonth() * 100))
-                        .build())
+                .map(date -> {
+                    int dailyHitCount = hitMap.getOrDefault(date, 0);
+                    double percentage = totalMonthlyHits > 0
+                            ? Math.round(dailyHitCount / (double) totalMonthlyHits * 100 * 100) / 100.0
+                            : 0.0;
+
+                    return hitDTO.builder()
+                            .name(String.valueOf(date.getDayOfMonth()))
+                            .hit(dailyHitCount) // 데이터가 없으면 0을 기본값으로 설정합니다.
+                            .percentage(percentage)
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
-    public List<hitDTO> getMonthlyHits(Long id, int year) {
+    public List<hitDTO> getMonthlyHits(int year) {
         // 연도 전체의 데이터 가져오기
         LocalDate startOfYear = LocalDate.of(year, 1, 1);
         LocalDate endOfYear = LocalDate.of(year, 12, 31);
@@ -158,7 +171,7 @@ public class VisitService {
             monthlyHits.add(hitDTO.builder()
                     .name(month + "월")
                     .hit(monthlyHitCount)
-                    .percentage(String.valueOf(Math.round(percentage * 100) / 100.0)) // 소수점 둘째 자리까지 반올림
+                    .percentage(Math.round(percentage * 100) / 100.0) // 소수점 둘째 자리까지 반올림
                     .build());
         }
 

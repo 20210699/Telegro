@@ -45,10 +45,10 @@ public class DashBoardController implements DashBoardControllerDocs{
         List<hitDTO> hitList;
         switch (filteredBy != null ? filteredBy : "daily") {
             case "daily":
-                hitList = visitService.getDailyHits(id, year, month);
+                hitList = visitService.getDailyHits(year, month);
                 break;
             case "monthly":
-                hitList = visitService.getMonthlyHits(id, year);
+                hitList = visitService.getMonthlyHits(year);
                 break;
 //            case "weekly":
 //                hitList = visitService.getWeeklyHits(id, year, month);
