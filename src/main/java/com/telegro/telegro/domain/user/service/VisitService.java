@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -67,44 +68,40 @@ public class VisitService {
         hitRepository.save(hit);
     }
 
+    @Transactional
     public void mergeAnonymousVisitToUser(HttpServletRequest request, HttpServletResponse response, Long userId) {
         LocalDate today = LocalDate.now();
-
-        // 쿠키에서 익명 사용자 ID 가져오기
         Optional<Cookie> optionalCookie = CookieUtil.getCookie(request, "anonymousUserId");
+
         if (optionalCookie.isPresent()) {
             String anonymousUserId = optionalCookie.get().getValue();
+            System.out.println("Anonymous User ID: " + anonymousUserId); // 로그 추가
 
-            // 익명 방문 기록 조회
             Optional<Hit> optionalAnonymousHit = hitRepository.findByDateAndAnonymousUserId(today, anonymousUserId);
             if (optionalAnonymousHit.isPresent()) {
                 Hit anonymousHit = optionalAnonymousHit.get();
-
-                // 로그인한 사용자에 대한 오늘의 기록이 있는지 확인
                 Optional<Hit> optionalUserHit = hitRepository.findByDateAndUserId(today, userId);
 
                 if (optionalUserHit.isPresent()) {
-                    // 로그인 사용자에 대한 오늘의 기록이 이미 있으면 방문 수를 합산합니다.
                     Hit userHit = optionalUserHit.get();
                     userHit.setHitCount(userHit.getHitCount() + anonymousHit.getHitCount());
-
-                    // 익명 기록 삭제
                     hitRepository.delete(anonymousHit);
-
-                    // 회원 기록 업데이트
                     hitRepository.save(userHit);
                 } else {
-                    // 로그인한 사용자에 대한 기록이 없으면 익명 기록을 로그인 사용자로 업데이트
                     anonymousHit.setUserId(userId);
-                    anonymousHit.setAnonymousUserId(null); // 익명 사용자 ID는 제거
+                    anonymousHit.setAnonymousUserId(null);
                     hitRepository.save(anonymousHit);
                 }
+            } else {
+                System.out.println("No anonymous hit found for today and user ID: " + anonymousUserId); // 로그 추가
             }
 
-            // 익명 사용자 ID 쿠키 삭제 (이미 회원으로 통합되었으므로 필요 없음)
             CookieUtil.deleteCookie(response, "anonymousUserId");
+        } else {
+            System.out.println("AnonymousUserId cookie not present"); // 로그 추가
         }
     }
+
 
     public List<hitDTO> getDailyHits(int year, int month) {
         LocalDate startDate = LocalDate.of(year, month, 1);
