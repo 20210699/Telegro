@@ -29,7 +29,7 @@ public class CookieUtil {
         Cookie cookie = new Cookie(name, value);
         cookie.setMaxAge(maxAge); // 쿠키 유효기간 설정
         cookie.setPath("/"); // 모든 경로에서 쿠키 사용 가능
-        cookie.setDomain("telegro.kr");
+        cookie.setAttribute("SameSite","None");
         cookie.setSecure(true);
         cookie.setHttpOnly(true);
         response.addCookie(cookie);
