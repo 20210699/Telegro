@@ -248,6 +248,10 @@ public class UserService {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
 
+        if(String.valueOf(deliveryAddress.getId()).equals(redisUtil.getData(getDefaultAddressKey(id)))){
+            redisUtil.deleteData(getDefaultAddressKey(id));
+        }
+
         deliveryAddressRepository.delete(deliveryAddress);
 
     }
