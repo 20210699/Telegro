@@ -264,10 +264,6 @@ public class UserService {
         DeliveryAddress existingAddress = deliveryAddressRepository.findById(addressId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
-
-        if (!existingAddress.getUser().getUserId().equals(currentUser.getUserId())) {
-            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
-        }
         if (request.getName() != null) {
             existingAddress.setName(request.getName());
         }

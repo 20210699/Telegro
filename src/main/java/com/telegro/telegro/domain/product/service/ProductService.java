@@ -20,10 +20,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -47,10 +46,10 @@ public class ProductService {
                 .options(request.options())
                 .category(request.category())
                 .content(request.content())
-                .priceBussiness(request.priceBussiness())
-                .priceBest(request.priceBest())
-                .priceDealer(request.priceDealer())
-                .priceCustomer(request.priceCustomer())
+                .priceBussiness(BigDecimal.valueOf(Double.parseDouble(request.priceBussiness())))
+                .priceBest(BigDecimal.valueOf(Double.parseDouble(request.priceBest())))
+                .priceDealer(BigDecimal.valueOf(Double.parseDouble(request.priceDealer())))
+                .priceCustomer(BigDecimal.valueOf(Double.parseDouble(request.priceCustomer())))
                 .pictures(request.pictures())
                 .build();
         Product savedProduct = productRepository.save(product);
@@ -90,8 +89,8 @@ public class ProductService {
         // Product를 ProductResponseDTO로 변환
         List<ProductResponseDTO> productDTOs = products.stream()
                 .map(product -> {
-                    String price = selectPriceByUserRole(product, user);
-                    return ProductResponseDTO.of(product, price);
+                    BigDecimal price = selectPriceByUserRole(product, user);
+                    return ProductResponseDTO.of(product, price.toString());
                 })
                 .toList();
 
@@ -115,7 +114,7 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
-        String price = selectPriceByUserRole(product, user);
+        BigDecimal price = selectPriceByUserRole(product, user);
 
         return ProductDetailResponseDTO.builder()
                 .productModel(product.getProductModel())
@@ -123,11 +122,11 @@ public class ProductService {
                 .options(product.getOptions())
                 .category(product.getCategory())
                 .content(product.getContent())
-                .price(price)
-                .priceBussiness(product.getPriceBussiness())
-                .priceBest(product.getPriceBest())
-                .priceDealer(product.getPriceDealer())
-                .priceCustomer(product.getPriceCustomer())
+                .price(price.toString())
+                .priceBussiness(product.getPriceBussiness().toString())
+                .priceBest(product.getPriceBest().toString())
+                .priceDealer(product.getPriceDealer().toString())
+                .priceCustomer(product.getPriceCustomer().toString())
                 .pictures(product.getPictures())
                 .content(product.getContent())
                 .coverImage(product.getCoverImage())
@@ -179,16 +178,16 @@ public class ProductService {
                     product.setContent((String) value);
                     break;
                 case "priceBussiness":
-                    product.setPriceBussiness((String) value);
+                    product.setPriceBussiness((BigDecimal) value);
                     break;
                 case "priceBest":
-                    product.setPriceBest((String) value);
+                    product.setPriceBest((BigDecimal) value);
                     break;
                 case "priceDealer":
-                    product.setPriceDealer((String) value);
+                    product.setPriceDealer((BigDecimal) value);
                     break;
                 case "priceCustomer":
-                    product.setPriceCustomer((String) value);
+                    product.setPriceCustomer((BigDecimal) value);
                     break;
                 case "pictures":
                     product.setPictures((List<String>) value);
@@ -209,17 +208,17 @@ public class ProductService {
                 .options(updatedProduct.getOptions())
                 .category(updatedProduct.getCategory())
                 .content(updatedProduct.getContent())
-                .priceBussiness(updatedProduct.getPriceBussiness())
-                .priceBest(updatedProduct.getPriceBest())
-                .priceDealer(updatedProduct.getPriceDealer())
-                .priceCustomer(updatedProduct.getPriceCustomer())
+                .priceBussiness(String.valueOf(updatedProduct.getPriceBussiness()))
+                .priceBest(String.valueOf(updatedProduct.getPriceBest()))
+                .priceDealer(String.valueOf(updatedProduct.getPriceDealer()))
+                .priceCustomer(String.valueOf(updatedProduct.getPriceCustomer()))
                 .pictures(updatedProduct.getPictures())
                 .coverImage(updatedProduct.getCoverImage())
                 .build();
     }
 
 
-    public String selectPriceByUserRole(Product product, User user) {
+    public BigDecimal selectPriceByUserRole(Product product, User user) {
         if (user == null) {
             // 로그인하지 않은 사용자는 'Customer' 가격을 보여줌
             return product.getPriceCustomer();

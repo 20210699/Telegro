@@ -7,6 +7,7 @@ import com.telegro.telegro.global.converter.StringListConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
@@ -38,19 +39,19 @@ public class Product extends BaseEntity {
     private String content;
 
     @Column
-    private String priceBussiness;
+    private BigDecimal priceBussiness;
 
     @Column
-    private String priceBest;
+    private BigDecimal priceBest;
 
     @Column
-    private String priceDealer;
+    private BigDecimal priceDealer;
 
     @Column
-    private String priceCustomer;
+    private BigDecimal priceCustomer;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> orders;
+//    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Order> orders;
 
     @Column(columnDefinition = "TEXT")
     @Convert(converter = StringListConverter.class)
