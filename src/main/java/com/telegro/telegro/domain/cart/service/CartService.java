@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Slf4j
@@ -41,12 +42,14 @@ public class CartService {
 
         List<Cart> carts = cartRepository.findByUserAndProduct(user, product);
 
+        BigDecimal productPrice = productService.selectPriceByUserRole(product, user);
+
         Cart cart = carts.stream()
                 .filter(existingCart -> existingCart.getSelectOption().equals(request.selectOption())
                 && existingCart.getInputOption().equals(request.inputOption()))
                 .findFirst()
                 .map(existingCart -> updateExistingCart(existingCart, request))
-                .orElseGet(() -> createNewCart(user, product, request));
+                .orElseGet(() -> createNewCart(user, product, request, productPrice));
 
         Cart savedCart = cartRepository.save(cart);
 
@@ -59,13 +62,15 @@ public class CartService {
         return existingCart;
     }
 
-    private Cart createNewCart(User user, Product product, CartRequestDTO request) {
+    private Cart createNewCart(User user, Product product, CartRequestDTO request, BigDecimal productPrice) {
         return Cart.builder()
                 .user(user)
                 .product(product)
                 .quantity(request.quantity())
                 .selectOption(request.selectOption())
                 .inputOption(request.inputOption())
+                .price(productPrice)
+                .totalPrice(productPrice.multiply(BigDecimal.valueOf(request.quantity())))
                 .build();
     }
 
@@ -82,11 +87,11 @@ public class CartService {
         long totalElement = carts.getTotalElements();
 
         List<CartResponseDTO> cartDTOs = carts.getContent().stream()
-                .map(cart -> CartResponseDTO.of(cart, cart.getProduct(), productService)).toList();
+                .map(CartResponseDTO::of).toList();
 
-        double totalPrice = cartDTOs.stream()
-                .mapToDouble(cartDTO -> cartDTO.productPrice() * cartDTO.quantity())
-                .sum();
+        BigDecimal totalPrice = cartDTOs.stream()
+                .map(cartDTO -> cartDTO.productPrice().multiply(BigDecimal.valueOf(cartDTO.quantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return CartListDTO.builder()
                 .isLast(isLast)
@@ -102,20 +107,49 @@ public class CartService {
         cartRepository.deleteByIdAndUserId(cartId, id);
     }
 
+//    @Transactional
+//    public CreatedCartDTO updateCartItem(Long id, Long cartId, CartRequestDTO request) {
+//
+//        Cart cart = cartRepository.findByIdAndUserId(cartId, id)
+//                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+//
+//        List<Cart> existingCarts = cartRepository.findByUserAndProduct(cart.getUser(), cart.getProduct()).stream()
+//                .filter(c -> !c.getId().equals(cart.getId()) && c.getSelectOption().equals(request.selectOption())
+//                && c.getInputOption().equals(request.inputOption()))
+//                .toList();
+//
+//        if (!existingCarts.isEmpty()) {
+//            Cart existingCart = existingCarts.get(0);
+//            existingCart.setQuantity(existingCart.getQuantity() + request.quantity());
+//            cartRepository.delete(cart);
+//            Cart updatedCart = cartRepository.save(existingCart);
+//            return CreatedCartDTO.builder().id(updatedCart.getId()).build();
+//        } else {
+//            cart.setSelectOption(request.selectOption());
+//            cart.setInputOption(request.inputOption());
+//            cart.setQuantity(request.quantity());
+//            Cart updatedCart = cartRepository.save(cart);
+//            return CreatedCartDTO.builder().id(updatedCart.getId()).build();
+//        }
+//    }
+
     @Transactional
     public CreatedCartDTO updateCartItem(Long id, Long cartId, CartRequestDTO request) {
-
         Cart cart = cartRepository.findByIdAndUserId(cartId, id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
         List<Cart> existingCarts = cartRepository.findByUserAndProduct(cart.getUser(), cart.getProduct()).stream()
                 .filter(c -> !c.getId().equals(cart.getId()) && c.getSelectOption().equals(request.selectOption())
-                && c.getInputOption().equals(request.inputOption()))
+                        && c.getInputOption().equals(request.inputOption()))
                 .toList();
 
         if (!existingCarts.isEmpty()) {
             Cart existingCart = existingCarts.get(0);
             existingCart.setQuantity(existingCart.getQuantity() + request.quantity());
+
+            // Update totalPrice for merged cart item
+            existingCart.setTotalPrice(existingCart.getPrice().multiply(BigDecimal.valueOf(existingCart.getQuantity())));
+
             cartRepository.delete(cart);
             Cart updatedCart = cartRepository.save(existingCart);
             return CreatedCartDTO.builder().id(updatedCart.getId()).build();
@@ -123,9 +157,14 @@ public class CartService {
             cart.setSelectOption(request.selectOption());
             cart.setInputOption(request.inputOption());
             cart.setQuantity(request.quantity());
+
+            // Update totalPrice for updated cart item
+            cart.setTotalPrice(cart.getPrice().multiply(BigDecimal.valueOf(cart.getQuantity())));
+
             Cart updatedCart = cartRepository.save(cart);
             return CreatedCartDTO.builder().id(updatedCart.getId()).build();
         }
     }
+
 
 }

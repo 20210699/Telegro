@@ -6,6 +6,8 @@ import com.telegro.telegro.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @EqualsAndHashCode(callSuper = false)
 @Data
 @Entity
@@ -30,6 +32,12 @@ public class Cart extends BaseEntity {
 
     @Column
     private String inputOption;
+
+    @Column
+    private BigDecimal price; // 물건 개당 가격
+
+    @Column
+    private BigDecimal totalPrice; // 물건 전체 가격(개당 가격 * 수량)
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)

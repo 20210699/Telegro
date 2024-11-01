@@ -3,11 +3,8 @@ package com.telegro.telegro.domain.user.service;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.company.service.CompanyService;
-import com.telegro.telegro.domain.user.dto.HitListDTO;
-import com.telegro.telegro.domain.user.dto.hitDTO;
 import com.telegro.telegro.domain.user.dto.response.*;
 import com.telegro.telegro.domain.user.entity.DeliveryAddress;
-import com.telegro.telegro.domain.user.entity.Hit;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.DeliveryAddressRepository;
@@ -16,10 +13,7 @@ import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.auth.dto.request.LoginRequestDto;
 import com.telegro.telegro.global.auth.dto.response.SignUpUserInfoDto;
-import com.telegro.telegro.global.common.CookieUtil;
 import com.telegro.telegro.global.common.RedisUtil;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
@@ -30,7 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -62,7 +56,8 @@ public class UserService {
                 .address(signUpUserInfoDto.getAddress())
                 .addressDetail(signUpUserInfoDto.getAddressDetail())
                 .zipCode(signUpUserInfoDto.getZipCode())
-                .totalPrice(0L)
+                .totalPrice(BigDecimal.ZERO)
+                .point(BigDecimal.ZERO)
                 .email(signUpUserInfoDto.getEmail())
                 .role(signUpUserInfoDto.getRole() != null ? signUpUserInfoDto.getRole() : Role.MEMBER)
                 .password(passwordEncoder.encode(signUpUserInfoDto.getPassword()))
@@ -229,7 +224,7 @@ public class UserService {
                 .address(request.getAddress())
                 .addressDetail(request.getAddressDetail())
                 .zipcode(request.getZipcode())
-                .user(user)
+//                .user(user)
                 .build();
 
         DeliveryAddress savedAddress = deliveryAddressRepository.save(address);
@@ -244,9 +239,9 @@ public class UserService {
         DeliveryAddress deliveryAddress = deliveryAddressRepository.findById(addressId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
-        if(!deliveryAddress.getUser().getUserId().equals(currentUser.getUserId())){
-            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
-        }
+//        if(!deliveryAddress.getUser().getUserId().equals(currentUser.getUserId())){
+//            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
+//        }
 
         if(String.valueOf(deliveryAddress.getId()).equals(redisUtil.getData(getDefaultAddressKey(id)))){
             redisUtil.deleteData(getDefaultAddressKey(id));
@@ -264,10 +259,6 @@ public class UserService {
         DeliveryAddress existingAddress = deliveryAddressRepository.findById(addressId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
-
-        if (!existingAddress.getUser().getUserId().equals(currentUser.getUserId())) {
-            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
-        }
         if (request.getName() != null) {
             existingAddress.setName(request.getName());
         }

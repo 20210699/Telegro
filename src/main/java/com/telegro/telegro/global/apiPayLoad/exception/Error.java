@@ -9,9 +9,7 @@ import org.springframework.http.HttpStatus;
 public enum Error {
     /* 400 */
     BAD_REQUEST_ERROR(HttpStatus.BAD_REQUEST, 40000, "적절하지 않은 요청입니다."),
-    NOT_ACCEPTABLE_OS(HttpStatus.BAD_REQUEST, 40001, "지원하지 않는 OS 기종입니다."),
-    NO_REVIEW_CONTENT_ERROR(HttpStatus.BAD_REQUEST, 40000, "리뷰 값이 존재하지 않습니다."),
-    INVALID_REVIEW_CONTENT_ERROR(HttpStatus.BAD_REQUEST, 40000, "부적절한 리뷰 형식입니다."),
+    INSUFFICIENT_POINTS(HttpStatus.BAD_REQUEST, 40001, "포인트가 부족합니다."),
 
     /* 401 */
     INVALID_TOKEN_ERROR(HttpStatus.UNAUTHORIZED, 40100, "유효하지 않은 토큰입니다."),
