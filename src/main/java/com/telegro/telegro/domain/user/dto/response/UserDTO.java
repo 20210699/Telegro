@@ -5,6 +5,7 @@ import com.telegro.telegro.domain.user.entity.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Builder
@@ -24,7 +25,7 @@ public record UserDTO(
         @Schema(description = "가입일")
         LocalDateTime createdDate,
         @Schema(description = "총 주문액")
-        Long totalPrice
+        BigDecimal totalPrice
 ) {
     public static UserDTO of(User user) {
         return UserDTO.builder()

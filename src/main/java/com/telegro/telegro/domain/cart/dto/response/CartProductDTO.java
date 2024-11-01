@@ -29,16 +29,16 @@ public record CartProductDTO(
         @Schema(description = "수량 * 상품 가격")
         BigDecimal totalPrice
 ) {
-    public static CartProductDTO of(Cart cart, BigDecimal productPrice) {
+    public static CartProductDTO of(Cart cart) {
         return CartProductDTO.builder()
                 .id(cart.getProduct().getId())
                 .productName(cart.getProduct().getProductName())
                 .productModel(cart.getProduct().getProductModel())
                 .selectOption(cart.getSelectOption())
                 .inputOption(cart.getInputOption())
-                .productPrice(productPrice)
+                .productPrice(cart.getPrice())
                 .quantity(cart.getQuantity())
-                .totalPrice(productPrice.multiply(BigDecimal.valueOf(cart.getQuantity())))
+                .totalPrice(cart.getPrice().multiply(BigDecimal.valueOf(cart.getQuantity())))
                 .build();
     }
 }

@@ -1,16 +1,25 @@
 package com.telegro.telegro.domain.order.service;
 
+import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
+import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
+import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
 import com.telegro.telegro.domain.order.entity.Order;
+import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
+import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
+import com.telegro.telegro.domain.user.dto.response.DeliveryAddressDetailDTO;
+import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
+import com.telegro.telegro.domain.user.repository.DeliveryAddressRepository;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,8 +33,10 @@ import java.util.UUID;
 public class OrderService {
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
-    private OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
+    private final DeliveryAddressRepository deliveryAddressRepository;
 
+    @Transactional
     public Order createOrder(Long id, List<Long> cartId) {
         List<Cart> carts = cartRepository.findByIdIn(cartId);
 
@@ -46,38 +57,89 @@ public class OrderService {
         return new Order(user, carts);
     }
 
-/*
-    private String getProductNames(List<Cart> carts) {
-        StringBuilder productNamesBuilder = new StringBuilder();
-        for (Cart cart : carts) {
+    private String generateMerchantUid() {
+        // 현재 날짜와 시간을 포함한 고유한 문자열 생성
+        String uniqueString = UUID.randomUUID().toString().replace("-", "");
+        LocalDateTime today = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String formattedDay = today.format(formatter).replace("-", "");
 
-            String productName = cart.getProduct().getProductName();
-
-            if (!productNamesBuilder.isEmpty()) {
-                productNamesBuilder.append(", ");
-            }
-            productNamesBuilder.append(productName);
-        }
-        return productNamesBuilder.toString();
+        // 무작위 문자열과 현재 날짜/시간을 조합하여 주문번호 생성
+        return formattedDay +'-'+ uniqueString;
     }
 
-    // 회원 전화번호를 가져오는 메서드
-    private String getMemberPhoneNumber(List<Cart> carts) {
-        Long userId = carts.get(0).getUser().getId();
-        User user = userRepository.findById(userId)
+    @Transactional
+    public OrderResponseDTO orderConfirm(Long id, Order temporaryOrder, OrderRequestDTO request) {
+        String merchantUid = generateMerchantUid(); //주문번호 생성
+
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
-        return (user != null && user.getPhone() != null) ? user.getPhone() : null;
-    }
 
-    // 총 가격을 계산하는 메서드
-    private BigDecimal calculateTotalPrice(List<Cart> carts) {
-        BigDecimal totalPrice = BigDecimal.ZERO;
-        for (Cart cart : carts) {
-            BigDecimal cartPrice = cart.getTotalPrice();
-            totalPrice = totalPrice.add(cartPrice);
+        if(!user.getId().equals(temporaryOrder.getUser().getId())) {
+            log.error("User is not the same");
+            throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
-        return totalPrice;
-    }*/
+
+        if(user.getPoint().compareTo(request.pointsToUse()) < 0){
+            throw CustomException.of(Error.INSUFFICIENT_POINTS);
+        }
+
+        // 배송지 중복성 검사 후 중복하지 않으면 새로운 데이터로 저장
+        DeliveryAddress deliveryAddress = request.deliveryAddress();
+        DeliveryAddress savedAddress = deliveryAddressRepository
+                .findByUserAndAddressAndAddressDetailAndZipcode(
+                        user,
+                        deliveryAddress.getAddress(),
+                        deliveryAddress.getAddressDetail(),
+                        deliveryAddress.getZipcode()
+                )
+                .orElseGet(() -> deliveryAddressRepository.save(deliveryAddress));
+
+        Order order = Order.builder()
+                .orderNumber(merchantUid)
+                .orderStatus(OrderStatus.ORDER_COMPLETED)
+                .paymentMethod(request.paymentMethod())
+                .paymentStatus(PaymentStatus.PENDING)
+                .shippingCost(request.shoppingCost())
+                .request(request.request())
+                .carts(temporaryOrder.getCarts())
+                .user(temporaryOrder.getUser())
+                .deliveryAddress(savedAddress)
+                .build();
+
+        BigDecimal totalPrice = BigDecimal.ZERO;
+
+        for (Cart cart : temporaryOrder.getCarts()) {
+            totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
+        }
+
+        user.setTotalPrice(totalPrice.add(user.getTotalPrice()));
+        user.setPoint(user.getPoint()
+                .subtract(request.pointsToUse())
+                .add(request.pointsToEarn()));
+
+        userRepository.save(user);
+
+        List<CartResponseDTO> products = temporaryOrder.getCarts().stream()
+                .map(CartResponseDTO::of).toList();
+
+        Order savedOrder = orderRepository.save(order);
+
+        return OrderResponseDTO.builder()
+                .id(savedOrder.getId())
+                .createdAt(savedOrder.getCreatedAt())
+                .coverImage(savedOrder.getCarts().get(0).getProduct().getCoverImage())
+                .orderNumber(savedOrder.getOrderNumber())
+                .products(products)
+                .userName(savedOrder.getUser().getUsername())
+                .userPhone(savedOrder.getUser().getPhone())
+                .deliveryAddress(savedOrder.getDeliveryAddress())
+                .paymentMethod(savedOrder.getPaymentMethod())
+                .usedPoint(request.pointsToUse())
+                .shippingCost(savedOrder.getShippingCost())
+                .totalPrice(totalPrice)
+                .build();
+    }
 
 
     // 주문한 상품 목록
@@ -106,15 +168,4 @@ public class OrderService {
                 .orders(orderDTOs)
                 .build();
     }*/
-
-    private String generateMerchantUid() {
-        // 현재 날짜와 시간을 포함한 고유한 문자열 생성
-        String uniqueString = UUID.randomUUID().toString().replace("-", "");
-        LocalDateTime today = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String formattedDay = today.format(formatter).replace("-", "");
-
-        // 무작위 문자열과 현재 날짜/시간을 조합하여 주문번호 생성
-        return formattedDay +'-'+ uniqueString;
-    }
 }

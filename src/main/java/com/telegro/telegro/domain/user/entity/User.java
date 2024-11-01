@@ -6,6 +6,7 @@ import com.telegro.telegro.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Entity @Getter @Setter @Builder
@@ -45,10 +46,10 @@ public class User extends BaseEntity {
     private String zipCode;
 
     @Column
-    private Long totalPrice;
+    private BigDecimal totalPrice;
 
     @Column
-    private Long point;
+    private BigDecimal point;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DeliveryAddress> deliveryAddresses;

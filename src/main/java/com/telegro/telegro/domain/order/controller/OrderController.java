@@ -1,8 +1,12 @@
 package com.telegro.telegro.domain.order.controller;
 
+import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
+import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.service.OrderService;
+import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
+import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -33,23 +37,16 @@ public class OrderController implements OrderControllerDocs{
     }
 
     @PostMapping("/done")
-    public ResponseEntity<Object> completeOrder(@RequestBody OrderDto request) {
-
-        OrderDto orders = modelMapper.map(request, OrderDto.class);
+    public SuccessResponse<OrderResponseDTO> completeOrder(Long id, OrderRequestDTO request) {
 
         // 세션에서 임시 주문 정보를 가져옴
-        Orders temporaryOrder = (Orders) httpSession.getAttribute("temporaryOrder");
+        Order temporaryOrder = (Order) httpSession.getAttribute("temporaryOrder");
 
         if (temporaryOrder == null) {
-            return ResponseEntity.badRequest().body("임시 주문 정보를 찾을 수 없습니다.");
+            throw CustomException.of(Error.NOT_FOUND_ERROR);
         }
 
-        Orders completedOrder = orderService.orderConfirm(temporaryOrder, orders);
-
-        OrderResponseDto orderResponseDto = new OrderResponseDto(completedOrder);
-
-        return ResponseEntity.ok(orderResponseDto);
-
+        return SuccessResponse.of(orderService.orderConfirm(id, temporaryOrder, request));
     }
 
     @GetMapping
