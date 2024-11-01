@@ -1,10 +1,12 @@
 package com.telegro.telegro.domain.order.service;
 
+import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
 import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
+import com.telegro.telegro.domain.order.dto.response.temporaryOrderDTO;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -138,6 +141,33 @@ public class OrderService {
                 .usedPoint(request.pointsToUse())
                 .shippingCost(savedOrder.getShippingCost())
                 .totalPrice(totalPrice)
+                .build();
+    }
+
+    public temporaryOrderDTO getOrderInfo(Long id, List<Long> cartId) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        List<Cart> carts = cartRepository.findByIdIn(cartId);
+
+        List<CartProductDTO> products = carts.stream()
+                .map(CartProductDTO::of).toList();
+
+        BigDecimal totalPrice = BigDecimal.ZERO;
+
+        for (Cart cart : carts) {
+            totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
+        }
+
+        BigDecimal points = totalPrice.multiply(new BigDecimal("0.01")).setScale(0, RoundingMode.HALF_UP);
+
+        return temporaryOrderDTO.builder()
+                .cartProductDTOS(products)
+                .userName(user.getUsername())
+                .userEmail(user.getEmail())
+                .totalPrice(totalPrice)
+                .totalPoint(user.getPoint())
+                .pointToEarn(points)
                 .build();
     }
 

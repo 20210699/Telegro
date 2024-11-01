@@ -3,6 +3,7 @@ package com.telegro.telegro.domain.order.controller;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
+import com.telegro.telegro.domain.order.dto.response.temporaryOrderDTO;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.service.OrderService;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
@@ -10,7 +11,6 @@ import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -24,16 +24,15 @@ public class OrderController implements OrderControllerDocs{
     private final HttpSession httpSession;
 
     @PostMapping("/create")
-    public SuccessResponse<?> createOrder(Long id, List<Long> cartId) {
+    public SuccessResponse<temporaryOrderDTO> createOrder(Long id, List<Long> cartId) {
         Order temporaryOrder = orderService.createOrder(id, cartId);
 
         // 세션에 임시 주문 정보를 저장
         httpSession.setAttribute("temporaryOrder", temporaryOrder);
         httpSession.setAttribute("cartId", cartId); // 장바구니 id 저장
+        httpSession.getAttribute("cartIds");
 
-        Object cartIdsAttribute = httpSession.getAttribute("cartIds");
-
-        return SuccessResponse.of(cartIdsAttribute);
+        return SuccessResponse.of(orderService.getOrderInfo(id, cartId));
     }
 
     @PostMapping("/done")

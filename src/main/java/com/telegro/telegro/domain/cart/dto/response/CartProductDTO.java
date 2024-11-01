@@ -10,8 +10,8 @@ import java.math.BigDecimal;
 public record CartProductDTO(
         @Schema(description = "상품 id")
         Long id,
-//        @Schema(description = "상품 대표이미지")
-//        String coverImage,
+        @Schema(description = "상품 대표이미지")
+        String coverImage,
 //        @Schema(description = "상품 카테고리")
 //        Category productCategory,
         @Schema(description = "상품명")
@@ -32,6 +32,7 @@ public record CartProductDTO(
     public static CartProductDTO of(Cart cart) {
         return CartProductDTO.builder()
                 .id(cart.getProduct().getId())
+                .coverImage(cart.getProduct().getCoverImage())
                 .productName(cart.getProduct().getProductName())
                 .productModel(cart.getProduct().getProductModel())
                 .selectOption(cart.getSelectOption())
