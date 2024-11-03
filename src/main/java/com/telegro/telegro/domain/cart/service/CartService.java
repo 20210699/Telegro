@@ -5,6 +5,7 @@ import com.telegro.telegro.domain.cart.dto.response.CartListDTO;
 import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.dto.response.CreatedCartDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
+import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.product.entity.Product;
 import com.telegro.telegro.domain.product.repository.ProductRepository;
@@ -71,6 +72,7 @@ public class CartService {
                 .inputOption(request.inputOption())
                 .price(productPrice)
                 .totalPrice(productPrice.multiply(BigDecimal.valueOf(request.quantity())))
+                .cartStatus(CartStatus.IN_CART)
                 .build();
     }
 
@@ -81,7 +83,7 @@ public class CartService {
 
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        Page<Cart> carts = cartRepository.findAllByUser(user, pageRequest);
+        Page<Cart> carts = cartRepository.findAllInCartByUser(user, pageRequest);
         boolean isLast = carts.isLast();
         int totalPage = carts.getTotalPages();
         long totalElement = carts.getTotalElements();
@@ -106,32 +108,6 @@ public class CartService {
     public void deleteCartItem(Long id, Long cartId) {
         cartRepository.deleteByIdAndUserId(cartId, id);
     }
-
-//    @Transactional
-//    public CreatedCartDTO updateCartItem(Long id, Long cartId, CartRequestDTO request) {
-//
-//        Cart cart = cartRepository.findByIdAndUserId(cartId, id)
-//                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
-//
-//        List<Cart> existingCarts = cartRepository.findByUserAndProduct(cart.getUser(), cart.getProduct()).stream()
-//                .filter(c -> !c.getId().equals(cart.getId()) && c.getSelectOption().equals(request.selectOption())
-//                && c.getInputOption().equals(request.inputOption()))
-//                .toList();
-//
-//        if (!existingCarts.isEmpty()) {
-//            Cart existingCart = existingCarts.get(0);
-//            existingCart.setQuantity(existingCart.getQuantity() + request.quantity());
-//            cartRepository.delete(cart);
-//            Cart updatedCart = cartRepository.save(existingCart);
-//            return CreatedCartDTO.builder().id(updatedCart.getId()).build();
-//        } else {
-//            cart.setSelectOption(request.selectOption());
-//            cart.setInputOption(request.inputOption());
-//            cart.setQuantity(request.quantity());
-//            Cart updatedCart = cartRepository.save(cart);
-//            return CreatedCartDTO.builder().id(updatedCart.getId()).build();
-//        }
-//    }
 
     @Transactional
     public CreatedCartDTO updateCartItem(Long id, Long cartId, CartRequestDTO request) {

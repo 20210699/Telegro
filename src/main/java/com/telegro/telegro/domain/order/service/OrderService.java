@@ -3,28 +3,34 @@ package com.telegro.telegro.domain.order.service;
 import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
 import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
+import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
+import com.telegro.telegro.domain.order.dto.response.OrderDetailDTO;
+import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
 import com.telegro.telegro.domain.order.dto.response.temporaryOrderDTO;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
-import com.telegro.telegro.domain.user.dto.response.DeliveryAddressDetailDTO;
 import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
+import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.DeliveryAddressRepository;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -58,6 +64,33 @@ public class OrderService {
 
         // 주문서 내용 중 사용자에게 입력받지 않고 자동으로 가져올 값 반환
         return new Order(user, carts);
+    }
+
+    public temporaryOrderDTO getOrderInfo(Long id, List<Long> cartId) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        List<Cart> carts = cartRepository.findByIdIn(cartId);
+
+        List<CartProductDTO> products = carts.stream()
+                .map(CartProductDTO::of).toList();
+
+        BigDecimal totalPrice = BigDecimal.ZERO;
+
+        for (Cart cart : carts) {
+            totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
+        }
+
+        BigDecimal points = totalPrice.multiply(new BigDecimal("0.01")).setScale(0, RoundingMode.HALF_UP);
+
+        return temporaryOrderDTO.builder()
+                .cartProductDTOS(products)
+                .userName(user.getUsername())
+                .userEmail(user.getEmail())
+                .totalPrice(totalPrice)
+                .totalPoint(user.getPoint())
+                .pointToEarn(points)
+                .build();
     }
 
     private String generateMerchantUid() {
@@ -114,6 +147,8 @@ public class OrderService {
 
         for (Cart cart : temporaryOrder.getCarts()) {
             totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
+            cart.setCartStatus(CartStatus.ORDERED); // Todo : 주문이 성공하면 CartStatus를 ORDERED로 수정
+            cartRepository.save(cart);
         }
 
         user.setTotalPrice(totalPrice.add(user.getTotalPrice()));
@@ -144,52 +179,45 @@ public class OrderService {
                 .build();
     }
 
-    public temporaryOrderDTO getOrderInfo(Long id, List<Long> cartId) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
-
-        List<Cart> carts = cartRepository.findByIdIn(cartId);
-
-        List<CartProductDTO> products = carts.stream()
-                .map(CartProductDTO::of).toList();
-
-        BigDecimal totalPrice = BigDecimal.ZERO;
-
-        for (Cart cart : carts) {
-            totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
-        }
-
-        BigDecimal points = totalPrice.multiply(new BigDecimal("0.01")).setScale(0, RoundingMode.HALF_UP);
-
-        return temporaryOrderDTO.builder()
-                .cartProductDTOS(products)
-                .userName(user.getUsername())
-                .userEmail(user.getEmail())
-                .totalPrice(totalPrice)
-                .totalPoint(user.getPoint())
-                .pointToEarn(points)
-                .build();
-    }
-
 
     // 주문한 상품 목록
-    /*public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
+    public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
         PageRequest pageRequest = PageRequest.of(page, size);
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        Page<Order> orders = orderRepository.findByCreatedAtBetweenAndUser(startDateTime, endDateTime, user, pageRequest);
+
+        Page<Order> orders;
+
+        if (startDate != null && endDate != null) {
+            // startDate와 endDate가 모두 있는 경우: 두 날짜 사이의 값
+            LocalDateTime startDateTime = startDate.atStartOfDay();
+            LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+            orders = orderRepository.findByCreatedAtBetweenAndUser(startDateTime, endDateTime, user, pageRequest);
+
+        } else if (startDate != null) {
+            // startDate만 있는 경우: 해당 날짜부터 현재까지의 값
+            LocalDateTime startDateTime = startDate.atStartOfDay();
+            orders = orderRepository.findByCreatedAtAfterAndUser(startDateTime, user, pageRequest);
+
+        } else if (endDate != null) {
+            // endDate만 있는 경우: 처음부터 해당 날짜까지의 값
+            LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+            orders = orderRepository.findByCreatedAtBeforeAndUser(endDateTime, user, pageRequest);
+
+        } else {
+            // startDate와 endDate가 모두 없는 경우: 전체 값
+            orders = orderRepository.findByUser(user, pageRequest);
+        }
 
         boolean isLast = orders.isLast();
         int totalPage = orders.getTotalPages();
         long totalElement = orders.getTotalElements();
 
         // 카트에 담긴 상품 중에 주문한 거
-        List<CartProductDTO> products;
+        List<CartProductDTO> products = cartRepository.findAllOrderedByUser(user).stream().map(CartProductDTO::of).toList();
 
         List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
-                .map(order -> OrderDetailDTO.of(order,products)).toList();
+                .map(order -> OrderDetailDTO.of(order, products)).toList();
 
         return OrderListDTO.builder()
                 .isLast(isLast)
@@ -197,5 +225,21 @@ public class OrderService {
                 .totalElement(totalElement)
                 .orders(orderDTOs)
                 .build();
-    }*/
+    }
+
+
+    public void updateOrderStatus(Long id, Long orderId, OrderStatus status) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if(!user.getRole().equals(Role.ADMIN)) {
+            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
+        }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        order.setOrderStatus(status);
+        orderRepository.save(order);
+    }
 }

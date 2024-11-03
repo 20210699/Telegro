@@ -4,7 +4,6 @@ import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentMethod;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
-import com.telegro.telegro.domain.product.entity.Product;
 import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.global.common.BaseEntity;
@@ -41,18 +40,11 @@ public class Order extends BaseEntity {
     @Column
     private BigDecimal shippingCost;
 
-//    @Column
-//    private Integer itemCount;
-//
     @Column(columnDefinition = "TEXT")
     private String request;
 
-//    @ManyToOne
-//    @JoinColumn(name = "product_id", nullable = false)
-//    private Product product;
-
     @OneToMany
-    @JoinColumn(name = "order_id") // Cart 테이블에 생성될 외래 키
+    @JoinColumn(name = "order_id")
     private List<Cart> carts;
 
     @ManyToOne

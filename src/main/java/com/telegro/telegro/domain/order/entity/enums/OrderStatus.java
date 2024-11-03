@@ -1,8 +1,18 @@
 package com.telegro.telegro.domain.order.entity.enums;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "주문 상태를 나타내는 열거형")
 public enum OrderStatus {
-    ORDER_COMPLETED,   // 주문 완료
-    ORDER_CANCELLED,   // 주문 취소
-    SHIPPING,          // 배송 중
-    DELIVERY_COMPLETED // 배송 완료
+    @Schema(description = "주문이 완료된 상태")
+    ORDER_COMPLETED,
+
+    @Schema(description = "주문이 취소된 상태")
+    ORDER_CANCELLED,
+
+    @Schema(description = "배송 중인 상태")
+    SHIPPING,
+
+    @Schema(description = "배송이 완료된 상태")
+    DELIVERY_COMPLETED
 }

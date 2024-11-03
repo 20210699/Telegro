@@ -5,6 +5,7 @@ import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
 import com.telegro.telegro.domain.order.dto.response.temporaryOrderDTO;
 import com.telegro.telegro.domain.order.entity.Order;
+import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.service.OrderService;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
@@ -49,8 +50,13 @@ public class OrderController implements OrderControllerDocs{
     }
 
     @GetMapping
-    public SuccessResponse<OrderListDTO> getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
-        return null;
-//        return SuccessResponse.of(orderService.getOrders(id, startDate, endDate, page, size));
+    public SuccessResponse<OrderListDTO> getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size){
+        return SuccessResponse.of(orderService.getOrders(id, startDate, endDate, page, size));
+    }
+
+    @PatchMapping("/{orderId}")
+    public SuccessResponse<Boolean> updateOrderStatus(Long id, Long orderId, OrderStatus status) {
+        orderService.updateOrderStatus(id, orderId, status);
+        return SuccessResponse.of();
     }
 }
