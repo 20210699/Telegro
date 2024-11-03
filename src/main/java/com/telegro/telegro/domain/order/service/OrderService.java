@@ -6,13 +6,14 @@ import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
+import com.telegro.telegro.domain.order.dto.response.OrderDetailDTO;
+import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
 import com.telegro.telegro.domain.order.dto.response.temporaryOrderDTO;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
-import com.telegro.telegro.domain.user.dto.response.DeliveryAddressDetailDTO;
 import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.repository.DeliveryAddressRepository;
@@ -21,11 +22,14 @@ import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -176,7 +180,7 @@ public class OrderService {
 
 
     // 주문한 상품 목록
-    /*public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
+    public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
         PageRequest pageRequest = PageRequest.of(page, size);
@@ -189,7 +193,7 @@ public class OrderService {
         long totalElement = orders.getTotalElements();
 
         // 카트에 담긴 상품 중에 주문한 거
-        List<CartProductDTO> products;
+        List<CartProductDTO> products = cartRepository.findAllOrderedByUser(user).stream().map(CartProductDTO::of).toList();
 
         List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
                 .map(order -> OrderDetailDTO.of(order,products)).toList();
@@ -200,5 +204,5 @@ public class OrderService {
                 .totalElement(totalElement)
                 .orders(orderDTOs)
                 .build();
-    }*/
+    }
 }

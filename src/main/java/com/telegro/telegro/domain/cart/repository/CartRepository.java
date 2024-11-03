@@ -20,6 +20,9 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
     @Query("SELECT c FROM Cart c WHERE c.user = :user AND c.cartStatus = 'IN_CART'")
     Page<Cart> findAllInCartByUser(User user, Pageable pageable);
 
+    @Query("SELECT c FROM Cart c WHERE c.user = :user AND c.cartStatus = 'ORDERED'")
+    List<Cart> findAllOrderedByUser(User user);
+
     void deleteByIdAndUserId(Long cartId, Long userId);
 
     Optional<Cart> findByIdAndUserId(Long cartId, Long id);
