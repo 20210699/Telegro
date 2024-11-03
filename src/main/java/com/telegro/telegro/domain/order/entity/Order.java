@@ -41,15 +41,8 @@ public class Order extends BaseEntity {
     @Column
     private BigDecimal shippingCost;
 
-//    @Column
-//    private Integer itemCount;
-//
     @Column(columnDefinition = "TEXT")
     private String request;
-
-//    @ManyToOne
-//    @JoinColumn(name = "product_id", nullable = false)
-//    private Product product;
 
     @OneToMany
     @JoinColumn(name = "order_id") // Cart 테이블에 생성될 외래 키

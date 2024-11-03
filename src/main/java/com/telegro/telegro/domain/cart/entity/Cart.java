@@ -1,5 +1,6 @@
 package com.telegro.telegro.domain.cart.entity;
 
+import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.product.entity.Product;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.global.common.BaseEntity;
@@ -38,6 +39,9 @@ public class Cart extends BaseEntity {
 
     @Column
     private BigDecimal totalPrice; // 물건 전체 가격(개당 가격 * 수량)
+
+    @Enumerated(EnumType.STRING)
+    private CartStatus cartStatus;
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)

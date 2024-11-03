@@ -3,6 +3,7 @@ package com.telegro.telegro.domain.order.service;
 import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
 import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
+import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
@@ -60,6 +61,33 @@ public class OrderService {
         return new Order(user, carts);
     }
 
+    public temporaryOrderDTO getOrderInfo(Long id, List<Long> cartId) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        List<Cart> carts = cartRepository.findByIdIn(cartId);
+
+        List<CartProductDTO> products = carts.stream()
+                .map(CartProductDTO::of).toList();
+
+        BigDecimal totalPrice = BigDecimal.ZERO;
+
+        for (Cart cart : carts) {
+            totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
+        }
+
+        BigDecimal points = totalPrice.multiply(new BigDecimal("0.01")).setScale(0, RoundingMode.HALF_UP);
+
+        return temporaryOrderDTO.builder()
+                .cartProductDTOS(products)
+                .userName(user.getUsername())
+                .userEmail(user.getEmail())
+                .totalPrice(totalPrice)
+                .totalPoint(user.getPoint())
+                .pointToEarn(points)
+                .build();
+    }
+
     private String generateMerchantUid() {
         // 현재 날짜와 시간을 포함한 고유한 문자열 생성
         String uniqueString = UUID.randomUUID().toString().replace("-", "");
@@ -114,6 +142,8 @@ public class OrderService {
 
         for (Cart cart : temporaryOrder.getCarts()) {
             totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
+            cart.setCartStatus(CartStatus.ORDERED); // Todo : 주문이 성공하면 CartStatus를 ORDERED로 수정
+            cartRepository.save(cart);
         }
 
         user.setTotalPrice(totalPrice.add(user.getTotalPrice()));
@@ -141,33 +171,6 @@ public class OrderService {
                 .usedPoint(request.pointsToUse())
                 .shippingCost(savedOrder.getShippingCost())
                 .totalPrice(totalPrice)
-                .build();
-    }
-
-    public temporaryOrderDTO getOrderInfo(Long id, List<Long> cartId) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
-
-        List<Cart> carts = cartRepository.findByIdIn(cartId);
-
-        List<CartProductDTO> products = carts.stream()
-                .map(CartProductDTO::of).toList();
-
-        BigDecimal totalPrice = BigDecimal.ZERO;
-
-        for (Cart cart : carts) {
-            totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
-        }
-
-        BigDecimal points = totalPrice.multiply(new BigDecimal("0.01")).setScale(0, RoundingMode.HALF_UP);
-
-        return temporaryOrderDTO.builder()
-                .cartProductDTOS(products)
-                .userName(user.getUsername())
-                .userEmail(user.getEmail())
-                .totalPrice(totalPrice)
-                .totalPoint(user.getPoint())
-                .pointToEarn(points)
                 .build();
     }
 
