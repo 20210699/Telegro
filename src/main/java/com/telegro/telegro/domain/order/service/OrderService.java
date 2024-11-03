@@ -16,6 +16,7 @@ import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
 import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
+import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.DeliveryAddressRepository;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
@@ -184,9 +185,29 @@ public class OrderService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
         PageRequest pageRequest = PageRequest.of(page, size);
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        Page<Order> orders = orderRepository.findByCreatedAtBetweenAndUser(startDateTime, endDateTime, user, pageRequest);
+
+        Page<Order> orders;
+
+        if (startDate != null && endDate != null) {
+            // startDate와 endDate가 모두 있는 경우: 두 날짜 사이의 값
+            LocalDateTime startDateTime = startDate.atStartOfDay();
+            LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+            orders = orderRepository.findByCreatedAtBetweenAndUser(startDateTime, endDateTime, user, pageRequest);
+
+        } else if (startDate != null) {
+            // startDate만 있는 경우: 해당 날짜부터 현재까지의 값
+            LocalDateTime startDateTime = startDate.atStartOfDay();
+            orders = orderRepository.findByCreatedAtAfterAndUser(startDateTime, user, pageRequest);
+
+        } else if (endDate != null) {
+            // endDate만 있는 경우: 처음부터 해당 날짜까지의 값
+            LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+            orders = orderRepository.findByCreatedAtBeforeAndUser(endDateTime, user, pageRequest);
+
+        } else {
+            // startDate와 endDate가 모두 없는 경우: 전체 값
+            orders = orderRepository.findByUser(user, pageRequest);
+        }
 
         boolean isLast = orders.isLast();
         int totalPage = orders.getTotalPages();
@@ -196,7 +217,7 @@ public class OrderService {
         List<CartProductDTO> products = cartRepository.findAllOrderedByUser(user).stream().map(CartProductDTO::of).toList();
 
         List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
-                .map(order -> OrderDetailDTO.of(order,products)).toList();
+                .map(order -> OrderDetailDTO.of(order, products)).toList();
 
         return OrderListDTO.builder()
                 .isLast(isLast)
@@ -204,5 +225,21 @@ public class OrderService {
                 .totalElement(totalElement)
                 .orders(orderDTOs)
                 .build();
+    }
+
+
+    public void updateOrderStatus(Long id, Long orderId, OrderStatus status) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        if(!user.getRole().equals(Role.ADMIN)) {
+            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
+        }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        order.setOrderStatus(status);
+        orderRepository.save(order);
     }
 }

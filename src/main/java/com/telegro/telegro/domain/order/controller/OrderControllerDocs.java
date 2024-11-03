@@ -4,10 +4,15 @@ import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
 import com.telegro.telegro.domain.order.dto.response.temporaryOrderDTO;
+import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
+import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -31,4 +36,14 @@ public interface OrderControllerDocs {
                                                    @RequestParam(value = "endDate", required = false) LocalDate endDate,
                                                    @RequestParam(value = "page",defaultValue = "0") int page,
                                                    @RequestParam(value = "size", defaultValue = "10") int size);
+
+    @Operation(summary = "주문 상태를 변경합니다.")
+    @ApiResponse(responseCode = "200", description = "주문 상태 변경 성공")
+    public SuccessResponse<Boolean> updateOrderStatus(@LoginInfo Long id, @PathVariable Long orderId,
+                                                      @RequestParam @Parameter(description = "변경할 주문 상태",
+                                                              examples =
+                                                                      {@ExampleObject(name = "주문 완료", value = "ORDER_COMPLETED"),
+                                                                              @ExampleObject(name = "주문 취소", value = "ORDER_CANCELLED"),
+                                                                              @ExampleObject(name = "배송 중", value = "SHIPPING"),
+                                                                              @ExampleObject(name = "배송 완료", value = "DELIVERY_COMPLETED")}) OrderStatus status);
 }
