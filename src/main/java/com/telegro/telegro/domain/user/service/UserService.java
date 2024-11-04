@@ -1,5 +1,6 @@
 package com.telegro.telegro.domain.user.service;
 
+import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.company.service.CompanyService;
@@ -40,6 +41,7 @@ public class UserService {
     private final DeliveryAddressRepository deliveryAddressRepository;
     private final RedisUtil redisUtil;
     private final HitRepository hitRepository;
+    private final CartRepository cartRepository;
 
     public void signUp(SignUpUserInfoDto signUpUserInfoDto) {
         User existUser = userRepository
@@ -142,6 +144,8 @@ public class UserService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
+        cartRepository.deleteByUser(user);
 
         if(!user.getRole().equals(Role.ADMIN) && !user.getRole().equals(Role.MEMBER)){
             Optional<Company> company = companyRepository.findByUserId(userId);

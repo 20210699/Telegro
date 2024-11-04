@@ -1,5 +1,6 @@
 package com.telegro.telegro.domain.product.service;
 
+import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.product.dto.request.ProductRequestDTO;
 import com.telegro.telegro.domain.product.dto.response.CreatedProductDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
@@ -30,6 +31,7 @@ import java.util.Map;
 public class ProductService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final CartRepository cartRepository;
 
     @Transactional
     public CreatedProductDTO createProduct(Long id, ProductRequestDTO request) {
@@ -141,8 +143,10 @@ public class ProductService {
         if(!user.getRole().toString().equals("ADMIN")) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
+        cartRepository.deleteByProductId(productId);
+
         productRepository.deleteById(productId);
-    } // Todo : 상품 삭제 시 해당 상품을 담은 장바구니도 삭제?
+    }
 
     @Transactional
     public ProductDetailResponseDTO updateProduct(Long id, Long productId, Map<String, Object> request) {
