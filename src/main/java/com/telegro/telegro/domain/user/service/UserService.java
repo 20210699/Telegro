@@ -1,5 +1,6 @@
 package com.telegro.telegro.domain.user.service;
 
+import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.company.service.CompanyService;
@@ -8,7 +9,6 @@ import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.DeliveryAddressRepository;
-import com.telegro.telegro.domain.user.repository.HitRepository;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.auth.dto.request.LoginRequestDto;
@@ -39,7 +39,7 @@ public class UserService {
     private final CompanyRepository companyRepository;
     private final DeliveryAddressRepository deliveryAddressRepository;
     private final RedisUtil redisUtil;
-    private final HitRepository hitRepository;
+    private final CartRepository cartRepository;
 
     public void signUp(SignUpUserInfoDto signUpUserInfoDto) {
         User existUser = userRepository
@@ -143,6 +143,8 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
+        cartRepository.deleteByUser(user);
+
         if(!user.getRole().equals(Role.ADMIN) && !user.getRole().equals(Role.MEMBER)){
             Optional<Company> company = companyRepository.findByUserId(userId);
             if(company.isPresent()){
@@ -212,6 +214,7 @@ public class UserService {
                 .phone(user.getPhone())
                 .email(user.getEmail())
                 .addressList(addressDTOs)
+                .point(user.getPoint())
                 .build();
     }
 

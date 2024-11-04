@@ -43,6 +43,7 @@ public class CompanyService {
                 .companyNumber(companyRequestDTO.getCompanyNumber())
                 .companyType(companyRequestDTO.getCompanyType())
                 .companyItem(companyRequestDTO.getCompanyItem())
+                .companyDescription(companyRequestDTO.getCompanyDescription())
                 .user(user)
                 .build();
         try {
@@ -74,13 +75,14 @@ public class CompanyService {
                 .companyNumber(company.getCompanyNumber())
                 .companyType(company.getCompanyType())
                 .companyItem(company.getCompanyItem())
+                .companyDescription(company.getCompanyDescription())
                 .build();
     }
 
     @Transactional
     public void deleteCompany(Long userId){
         Optional<Company> optionalCompany = companyRepository.findByUserId(userId);
-        if (!optionalCompany.isPresent()) {
+        if (optionalCompany.isEmpty()) {
             throw CustomException.of(Error.NOT_FOUND_ERROR);
         }
 
@@ -116,6 +118,9 @@ public class CompanyService {
         }
         if (companyRequest.getCompanyItem() != null) {
             company.setCompanyItem(companyRequest.getCompanyItem());
+        }
+        if (companyRequest.getCompanyDescription() != null) {
+            company.setCompanyDescription(companyRequest.getCompanyDescription());
         }
         // 변경된 회사 정보 저장
         companyRepository.save(company);

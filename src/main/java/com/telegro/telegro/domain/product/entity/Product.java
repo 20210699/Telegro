@@ -50,9 +50,6 @@ public class Product extends BaseEntity {
     @Column
     private BigDecimal priceCustomer;
 
-//    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Order> orders;
-
     @Column(columnDefinition = "TEXT")
     @Convert(converter = StringListConverter.class)
     private List<String> pictures;

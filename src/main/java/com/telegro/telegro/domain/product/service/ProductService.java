@@ -1,5 +1,6 @@
 package com.telegro.telegro.domain.product.service;
 
+import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.product.dto.request.ProductRequestDTO;
 import com.telegro.telegro.domain.product.dto.response.CreatedProductDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
@@ -30,6 +31,7 @@ import java.util.Map;
 public class ProductService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final CartRepository cartRepository;
 
     @Transactional
     public CreatedProductDTO createProduct(Long id, ProductRequestDTO request) {
@@ -141,6 +143,8 @@ public class ProductService {
         if(!user.getRole().toString().equals("ADMIN")) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
+        cartRepository.deleteByProductId(productId);
+
         productRepository.deleteById(productId);
     }
 
@@ -178,19 +182,20 @@ public class ProductService {
                     product.setContent((String) value);
                     break;
                 case "priceBussiness":
-                    product.setPriceBussiness((BigDecimal) value);
+                    product.setPriceBussiness(BigDecimal.valueOf((Integer)value));
                     break;
                 case "priceBest":
-                    product.setPriceBest((BigDecimal) value);
+                    product.setPriceBest(BigDecimal.valueOf((Integer)value));
                     break;
                 case "priceDealer":
-                    product.setPriceDealer((BigDecimal) value);
+                    product.setPriceDealer(BigDecimal.valueOf((Integer)value));
                     break;
                 case "priceCustomer":
-                    product.setPriceCustomer((BigDecimal) value);
+                    product.setPriceCustomer(BigDecimal.valueOf((Integer)value));
                     break;
                 case "pictures":
                     product.setPictures((List<String>) value);
+                    product.setCoverImage(product.getPictures().get(0));
                     break;
                 case "coverImage":
                     product.setCoverImage((String) value);

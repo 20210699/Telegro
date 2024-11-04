@@ -38,4 +38,7 @@ public class Company extends BaseEntity {
 
     @Column
     private String companyItem;
+
+    @Column(columnDefinition = "TEXT")
+    private String companyDescription;
 }
