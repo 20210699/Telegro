@@ -35,6 +35,8 @@ public record CompanyDetailDTO(
         @Schema(description = "업태")
         String companyType,
         @Schema(description = "종목")
-        String companyItem
+        String companyItem,
+        @Schema(description = "기타 문구 기재")
+        String companyDescription
 ) {
 }
