@@ -142,7 +142,7 @@ public class ProductService {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
         productRepository.deleteById(productId);
-    }
+    } // Todo : 상품 삭제 시 해당 상품을 담은 장바구니도 삭제?
 
     @Transactional
     public ProductDetailResponseDTO updateProduct(Long id, Long productId, Map<String, Object> request) {
@@ -178,19 +178,20 @@ public class ProductService {
                     product.setContent((String) value);
                     break;
                 case "priceBussiness":
-                    product.setPriceBussiness((BigDecimal) value);
+                    product.setPriceBussiness(BigDecimal.valueOf((Integer)value));
                     break;
                 case "priceBest":
-                    product.setPriceBest((BigDecimal) value);
+                    product.setPriceBest(BigDecimal.valueOf((Integer)value));
                     break;
                 case "priceDealer":
-                    product.setPriceDealer((BigDecimal) value);
+                    product.setPriceDealer(BigDecimal.valueOf((Integer)value));
                     break;
                 case "priceCustomer":
-                    product.setPriceCustomer((BigDecimal) value);
+                    product.setPriceCustomer(BigDecimal.valueOf((Integer)value));
                     break;
                 case "pictures":
                     product.setPictures((List<String>) value);
+                    product.setCoverImage(product.getPictures().get(0));
                     break;
                 case "coverImage":
                     product.setCoverImage((String) value);
