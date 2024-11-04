@@ -9,7 +9,6 @@ import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.DeliveryAddressRepository;
-import com.telegro.telegro.domain.user.repository.HitRepository;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.auth.dto.request.LoginRequestDto;
@@ -40,7 +39,6 @@ public class UserService {
     private final CompanyRepository companyRepository;
     private final DeliveryAddressRepository deliveryAddressRepository;
     private final RedisUtil redisUtil;
-    private final HitRepository hitRepository;
     private final CartRepository cartRepository;
 
     public void signUp(SignUpUserInfoDto signUpUserInfoDto) {
@@ -216,6 +214,7 @@ public class UserService {
                 .phone(user.getPhone())
                 .email(user.getEmail())
                 .addressList(addressDTOs)
+                .point(user.getPoint())
                 .build();
     }
 

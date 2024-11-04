@@ -5,6 +5,7 @@ import com.telegro.telegro.domain.user.entity.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,6 +21,8 @@ public record UserInfoDTO(
         String phone,
         @Schema(description = "이메일")
         String email,
+        @Schema(description = "적립금")
+        BigDecimal point,
         @Schema(description = "배송지 목록")
         List<DeliveryAddressDetailDTO> addressList
 ) {
