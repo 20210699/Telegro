@@ -194,6 +194,7 @@ public class OrderService {
 
         if(user.getRole().equals(Role.ADMIN)){
             orders = orderRepository.findAll(pageRequest);
+            // Todo : 시작 날짜와 종료 날짜 반영되도록 수정
         } else {
             if (startDate != null && endDate != null) {
                 // startDate와 endDate가 모두 있는 경우: 두 날짜 사이의 값
