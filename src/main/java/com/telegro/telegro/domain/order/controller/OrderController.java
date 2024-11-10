@@ -12,11 +12,13 @@ import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -43,6 +45,7 @@ public class OrderController implements OrderControllerDocs{
         Order temporaryOrder = (Order) httpSession.getAttribute("temporaryOrder");
 
         if (temporaryOrder == null) {
+            log.error("Order not found");
             throw CustomException.of(Error.NOT_FOUND_ERROR);
         }
 
