@@ -9,6 +9,7 @@ import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.mapping.ToOne;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -51,7 +52,7 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToOne
+    @ManyToOne
     private DeliveryAddress deliveryAddress;
 
     public Order(User user, List<Cart> carts) {
