@@ -188,25 +188,29 @@ public class OrderService {
 
         Page<Order> orders;
 
-        if (startDate != null && endDate != null) {
-            // startDate와 endDate가 모두 있는 경우: 두 날짜 사이의 값
-            LocalDateTime startDateTime = startDate.atStartOfDay();
-            LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-            orders = orderRepository.findByCreatedAtBetweenAndUser(startDateTime, endDateTime, user, pageRequest);
-
-        } else if (startDate != null) {
-            // startDate만 있는 경우: 해당 날짜부터 현재까지의 값
-            LocalDateTime startDateTime = startDate.atStartOfDay();
-            orders = orderRepository.findByCreatedAtAfterAndUser(startDateTime, user, pageRequest);
-
-        } else if (endDate != null) {
-            // endDate만 있는 경우: 처음부터 해당 날짜까지의 값
-            LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-            orders = orderRepository.findByCreatedAtBeforeAndUser(endDateTime, user, pageRequest);
-
+        if(user.getRole().equals(Role.ADMIN)){
+            orders = orderRepository.findAll(pageRequest);
         } else {
-            // startDate와 endDate가 모두 없는 경우: 전체 값
-            orders = orderRepository.findByUser(user, pageRequest);
+            if (startDate != null && endDate != null) {
+                // startDate와 endDate가 모두 있는 경우: 두 날짜 사이의 값
+                LocalDateTime startDateTime = startDate.atStartOfDay();
+                LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+                orders = orderRepository.findByCreatedAtBetweenAndUser(startDateTime, endDateTime, user, pageRequest);
+
+            } else if (startDate != null) {
+                // startDate만 있는 경우: 해당 날짜부터 현재까지의 값
+                LocalDateTime startDateTime = startDate.atStartOfDay();
+                orders = orderRepository.findByCreatedAtAfterAndUser(startDateTime, user, pageRequest);
+
+            } else if (endDate != null) {
+                // endDate만 있는 경우: 처음부터 해당 날짜까지의 값
+                LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+                orders = orderRepository.findByCreatedAtBeforeAndUser(endDateTime, user, pageRequest);
+
+            } else {
+                // startDate와 endDate가 모두 없는 경우: 전체 값
+                orders = orderRepository.findByUser(user, pageRequest);
+            }
         }
 
         boolean isLast = orders.isLast();
