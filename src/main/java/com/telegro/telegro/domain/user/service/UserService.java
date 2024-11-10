@@ -227,7 +227,7 @@ public class UserService {
                 .address(request.getAddress())
                 .addressDetail(request.getAddressDetail())
                 .zipcode(request.getZipcode())
-//                .user(user)
+                .user(user)
                 .build();
 
         DeliveryAddress savedAddress = deliveryAddressRepository.save(address);
