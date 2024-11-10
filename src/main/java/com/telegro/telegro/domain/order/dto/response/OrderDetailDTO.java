@@ -2,13 +2,17 @@ package com.telegro.telegro.domain.order.dto.response;
 
 import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
 import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
+import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentMethod;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
 import com.telegro.telegro.domain.user.dto.response.DeliveryAddressDetailDTO;
+import com.telegro.telegro.domain.user.dto.response.UserInfoDTO;
+import com.telegro.telegro.domain.user.dto.response.UserOrderInfoDTO;
 import com.telegro.telegro.domain.user.entity.DeliveryAddress;
+import com.telegro.telegro.domain.user.entity.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -35,9 +39,11 @@ public record OrderDetailDTO(
         @Schema(description = "결제 상태")
         PaymentStatus paymentStatus,
         @Schema(description = "배송비 정보")
-        DeliveryAddressDetailDTO deliveryAddress
+        DeliveryAddressDetailDTO deliveryAddress,
+        @Schema(description = "주문자 정보")
+        UserOrderInfoDTO userInfo
 ) {
-        public static OrderDetailDTO of(Order order, List<CartProductDTO> products) {
+        public static OrderDetailDTO of(Order order, List<CartProductDTO> products, UserOrderInfoDTO user) {
                 DeliveryAddressDetailDTO deliveryAddressDetailDTO = DeliveryAddressDetailDTO.of(order.getDeliveryAddress(),true);
                 return OrderDetailDTO.builder()
                         .id(order.getId())
@@ -49,6 +55,7 @@ public record OrderDetailDTO(
                         .paymentMethod(order.getPaymentMethod())
                         .paymentStatus(order.getPaymentStatus())
                         .deliveryAddress(deliveryAddressDetailDTO)
+                        .userInfo(user)
                         .build();
         }
 }

@@ -5,6 +5,8 @@ import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
+import com.telegro.telegro.domain.company.entity.Company;
+import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderDetailDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
@@ -14,6 +16,7 @@ import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
+import com.telegro.telegro.domain.user.dto.response.UserOrderInfoDTO;
 import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
@@ -44,6 +47,7 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final DeliveryAddressRepository deliveryAddressRepository;
+    private final CompanyRepository companyRepository;
 
     @Transactional
     public Order createOrder(Long id, List<Long> cartId) {
@@ -221,7 +225,21 @@ public class OrderService {
         List<CartProductDTO> products = cartRepository.findAllOrderedByUser(user).stream().map(CartProductDTO::of).toList();
 
         List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
-                .map(order -> OrderDetailDTO.of(order, products)).toList();
+                .map(order -> {
+                    String username;
+                    if(order.getUser().getRole().equals(Role.MEMBER)){
+                        username = order.getUser().getUsername();
+                    } else {
+                        Company company = companyRepository.findByUserId(order.getUser().getId())
+                                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                        username = company.getCompanyName();
+                    }
+                    UserOrderInfoDTO userDTO = UserOrderInfoDTO.of(order.getUser(), username);
+
+                    return OrderDetailDTO.of(order, products, userDTO);
+                })
+                .toList();
+
 
         return OrderListDTO.builder()
                 .isLast(isLast)
