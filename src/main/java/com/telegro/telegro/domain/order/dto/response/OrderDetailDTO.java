@@ -7,6 +7,7 @@ import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentMethod;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
+import com.telegro.telegro.domain.user.dto.response.DeliveryAddressDetailDTO;
 import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -34,9 +35,10 @@ public record OrderDetailDTO(
         @Schema(description = "결제 상태")
         PaymentStatus paymentStatus,
         @Schema(description = "배송비 정보")
-        DeliveryAddress deliveryAddress
+        DeliveryAddressDetailDTO deliveryAddress
 ) {
         public static OrderDetailDTO of(Order order, List<CartProductDTO> products) {
+                DeliveryAddressDetailDTO deliveryAddressDetailDTO = DeliveryAddressDetailDTO.of(order.getDeliveryAddress(),true);
                 return OrderDetailDTO.builder()
                         .id(order.getId())
                         .orderNumber(order.getOrderNumber())
@@ -46,7 +48,7 @@ public record OrderDetailDTO(
                         .shoppingCost(order.getShippingCost())
                         .paymentMethod(order.getPaymentMethod())
                         .paymentStatus(order.getPaymentStatus())
-                        .deliveryAddress(order.getDeliveryAddress())
+                        .deliveryAddress(deliveryAddressDetailDTO)
                         .build();
         }
 }
