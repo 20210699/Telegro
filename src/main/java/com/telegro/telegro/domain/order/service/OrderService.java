@@ -188,6 +188,7 @@ public class OrderService {
     public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+
         PageRequest pageRequest = PageRequest.of(page, size);
 
         Page<Order> orders;
@@ -227,7 +228,7 @@ public class OrderService {
         List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
                 .map(order -> {
                     String username;
-                    if(order.getUser().getRole().equals(Role.MEMBER)){
+                    if(order.getUser().getRole().equals(Role.MEMBER)||order.getUser().getRole().equals(Role.ADMIN)){
                         username = order.getUser().getUsername();
                     } else {
                         Company company = companyRepository.findByUserId(order.getUser().getId())
