@@ -69,6 +69,7 @@ public class CompanyService {
                 .address(company.getUser().getAddress())
                 .addressDetail(company.getUser().getAddressDetail())
                 .zipCode(company.getUser().getZipCode())
+                .point(company.getUser().getPoint())
                 .managerName(company.getManagerName())
                 .managerPhone(company.getManagerPhone())
                 .companyName(company.getCompanyName())
