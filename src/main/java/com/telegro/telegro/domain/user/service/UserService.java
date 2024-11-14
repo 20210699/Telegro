@@ -128,6 +128,7 @@ public class UserService {
                 .address(user.getAddress())
                 .addressDetail(user.getAddressDetail())
                 .zipCode(user.getZipCode())
+                .point(user.getPoint())
                 .build();
     }
 

@@ -25,7 +25,9 @@ public record UserDTO(
         @Schema(description = "가입일")
         LocalDateTime createdDate,
         @Schema(description = "총 주문액")
-        BigDecimal totalPrice
+        BigDecimal totalPrice,
+        @Schema(description = "사용 가능한 포인트")
+        BigDecimal point
 ) {
     public static UserDTO of(User user) {
         return UserDTO.builder()
@@ -37,6 +39,7 @@ public record UserDTO(
                 .userId(user.getUserId())
                 .createdDate(user.getCreatedAt())
                 .totalPrice(user.getTotalPrice())
+                .point(user.getPoint())
                 .build();
     }
 }

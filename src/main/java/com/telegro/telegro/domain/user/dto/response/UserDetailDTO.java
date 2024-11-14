@@ -4,6 +4,8 @@ import com.telegro.telegro.domain.user.entity.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.math.BigDecimal;
+
 @Builder
 public record UserDetailDTO(
         @Schema(description = "회원 id")
@@ -25,6 +27,8 @@ public record UserDetailDTO(
         @Schema(description = "상세 주소")
         String addressDetail,
         @Schema(description = "우편 번호")
-        String zipCode
+        String zipCode,
+        @Schema(description = "포인트")
+        BigDecimal point
 ) {
 }
