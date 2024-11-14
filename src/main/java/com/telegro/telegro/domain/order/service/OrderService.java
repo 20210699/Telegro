@@ -192,43 +192,25 @@ public class OrderService {
         PageRequest pageRequest = PageRequest.of(page, size);
 
         Page<Order> orders;
-
-        if(user.getRole().equals(Role.ADMIN)){
-            orders = orderRepository.findAll(pageRequest);
+        if (user.getRole().equals(Role.ADMIN)) {
+            orders = findOrdersByDateRange(startDate, endDate, pageRequest, null);
         } else {
-            if (startDate != null && endDate != null) {
-                // startDate와 endDate가 모두 있는 경우: 두 날짜 사이의 값
-                LocalDateTime startDateTime = startDate.atStartOfDay();
-                LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-                orders = orderRepository.findByCreatedAtBetweenAndUser(startDateTime, endDateTime, user, pageRequest);
-
-            } else if (startDate != null) {
-                // startDate만 있는 경우: 해당 날짜부터 현재까지의 값
-                LocalDateTime startDateTime = startDate.atStartOfDay();
-                orders = orderRepository.findByCreatedAtAfterAndUser(startDateTime, user, pageRequest);
-
-            } else if (endDate != null) {
-                // endDate만 있는 경우: 처음부터 해당 날짜까지의 값
-                LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-                orders = orderRepository.findByCreatedAtBeforeAndUser(endDateTime, user, pageRequest);
-
-            } else {
-                // startDate와 endDate가 모두 없는 경우: 전체 값
-                orders = orderRepository.findByUser(user, pageRequest);
-            }
+            orders = findOrdersByDateRange(startDate, endDate, pageRequest, user);
         }
 
         boolean isLast = orders.isLast();
         int totalPage = orders.getTotalPages();
         long totalElement = orders.getTotalElements();
 
-        // 카트에 담긴 상품 중에 주문한 거
-        List<CartProductDTO> products = cartRepository.findAllOrderedByUser(user).stream().map(CartProductDTO::of).toList();
+        // 카트에 담긴 상품 중에 주문한 것
+        List<CartProductDTO> products = cartRepository.findAllOrderedByUser(user).stream()
+                .map(CartProductDTO::of)
+                .toList();
 
         List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
                 .map(order -> {
                     String username;
-                    if(order.getUser().getRole().equals(Role.MEMBER)||order.getUser().getRole().equals(Role.ADMIN)){
+                    if (order.getUser().getRole().equals(Role.MEMBER) || order.getUser().getRole().equals(Role.ADMIN)) {
                         username = order.getUser().getUsername();
                     } else {
                         Company company = companyRepository.findByUserId(order.getUser().getId())
@@ -241,7 +223,6 @@ public class OrderService {
                 })
                 .toList();
 
-
         return OrderListDTO.builder()
                 .isLast(isLast)
                 .totalPage(totalPage)
@@ -250,6 +231,28 @@ public class OrderService {
                 .build();
     }
 
+    private Page<Order> findOrdersByDateRange(LocalDate startDate, LocalDate endDate, PageRequest pageRequest, User user) {
+        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(23, 59, 59) : null;
+
+        if (startDateTime != null && endDateTime != null) {
+            return (user == null)
+                    ? orderRepository.findByCreatedAtBetween(startDateTime, endDateTime, pageRequest)
+                    : orderRepository.findByCreatedAtBetweenAndUser(startDateTime, endDateTime, user, pageRequest);
+        } else if (startDateTime != null) {
+            return (user == null)
+                    ? orderRepository.findByCreatedAtAfter(startDateTime, pageRequest)
+                    : orderRepository.findByCreatedAtAfterAndUser(startDateTime, user, pageRequest);
+        } else if (endDateTime != null) {
+            return (user == null)
+                    ? orderRepository.findByCreatedAtBefore(endDateTime, pageRequest)
+                    : orderRepository.findByCreatedAtBeforeAndUser(endDateTime, user, pageRequest);
+        } else {
+            return (user == null)
+                    ? orderRepository.findAll(pageRequest)
+                    : orderRepository.findByUser(user, pageRequest);
+        }
+    }
 
     public void updateOrderStatus(Long id, Long orderId, OrderStatus status) {
         User user = userRepository.findById(id)
