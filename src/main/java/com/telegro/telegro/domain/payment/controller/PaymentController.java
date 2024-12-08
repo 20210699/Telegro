@@ -48,6 +48,7 @@ public class PaymentController implements PaymentControllerDocs{
         IamportResponse<Payment> payment = iamportClient.paymentByImpUid(imp_uid);
 
         log.info("결제 요청 응답. 결제 내역 - 주문 번호: {}", payment.getResponse().getMerchantUid());
+        log.info("user Id: {}", id);
 
         paymentService.processPaymentDone(id, request);
 
