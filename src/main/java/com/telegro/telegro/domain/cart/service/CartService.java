@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -46,8 +47,9 @@ public class CartService {
         BigDecimal productPrice = productService.selectPriceByUserRole(product, user);
 
         Cart cart = carts.stream()
-                .filter(existingCart -> existingCart.getSelectOption().equals(request.selectOption())
-                && existingCart.getInputOption().equals(request.inputOption()))
+                .filter(existingCart -> Objects.equals(existingCart.getSelectOption(), request.selectOption()) &&
+                        Objects.equals(existingCart.getInputOption(), request.inputOption()) &&
+                        CartStatus.IN_CART.equals(existingCart.getCartStatus()))
                 .findFirst()
                 .map(existingCart -> updateExistingCart(existingCart, request))
                 .orElseGet(() -> createNewCart(user, product, request, productPrice));
