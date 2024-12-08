@@ -34,31 +34,29 @@ public class PaymentService {
 
         Long orderId = request.getOrderId();
         Long totalPrice = request.getPrice();
-        List<Long> cartIds = request.getCartIds();
+//        List<Long> cartIds = request.getCartIds();
 
-        //orders 테이블에서 해당 부분 결제true 처리
         Order currentOrder = orderRepository.findById(orderId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
         currentOrder.setPaymentStatus(PaymentStatus.COMPLETED);
 
-        // PaymentHistory 테이블에 저장할 Member 객체
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
-        // PaymentHistory 테이블에 저장할 Orders 객체
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("해당 주문서를 찾을 수 없습니다. Id : " + orderId));
 
-        // 주문한 상품들에 대해 각각 결제내역 저장
-        createPaymentHistory(cartIds, order, user, totalPrice);
+//        createPaymentHistory(cartIds, order, user, totalPrice);
+        createPaymentHistory(order, user, totalPrice);
 
     }
 
-    // 결제내역 테이블 저장하는 메서드
-    private void createPaymentHistory(List<Long> productMgtIdList, Order order, User user, Long totalPrice) {
-        for (Long productMgtId : productMgtIdList) {
+    private void createPaymentHistory(Order order, User user, Long totalPrice) {
+//    private void createPaymentHistory(List<Long> cartIdList, Order order, User user, Long totalPrice) { // Todo : 추후 수정
+        List<Long> cartIdList = order.getCarts().stream().map(Cart::getId).toList();
+        for (Long cartId : cartIdList) {
 
-            Cart cart = cartRepository.findById(productMgtId)
+            Cart cart = cartRepository.findById(cartId)
                     .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
             Product product = cart.getProduct();
