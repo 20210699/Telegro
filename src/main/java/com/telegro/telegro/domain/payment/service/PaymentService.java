@@ -37,11 +37,11 @@ public class PaymentService {
 //        List<Long> cartIds = request.getCartIds();
 
         Order currentOrder = orderRepository.findById(orderId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
         currentOrder.setPaymentStatus(PaymentStatus.COMPLETED);
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("해당 주문서를 찾을 수 없습니다. Id : " + orderId));
@@ -57,7 +57,7 @@ public class PaymentService {
         for (Long cartId : cartIdList) {
 
             Cart cart = cartRepository.findById(cartId)
-                    .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                    .orElseThrow(() -> CustomException.of(Error.CART_NOT_FOUND));
 
             Product product = cart.getProduct();
             String option = cart.getInputOption() + ", " + cart.getSelectOption(); // 상품옵션 문자열로 저장

@@ -8,6 +8,8 @@ import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDto;
 import com.telegro.telegro.domain.payment.service.PaymentService;
+import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
+import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +62,7 @@ public class PaymentController implements PaymentControllerDocs{
 
         for(Long cartId : cartIds){
             Cart cart = cartRepository.findById(cartId)
-                    .orElseThrow(() -> new NoSuchElementException("삭제할 장바구니를 찾을 수 없습니다."));
+                    .orElseThrow(() -> CustomException.of(Error.CART_NOT_FOUND));
             cartRepository.delete(cart);
         }
         httpSession.removeAttribute("temporaryOrder");

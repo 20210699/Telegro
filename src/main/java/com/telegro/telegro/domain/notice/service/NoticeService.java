@@ -32,7 +32,7 @@ public class NoticeService {
     @Transactional
     public CreatedNoticeDTO createNotice(Long id, Notice request) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!user.getRole().equals(Role.ADMIN)) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
@@ -78,7 +78,7 @@ public class NoticeService {
     @Transactional
     public NoticeDetailDTO getNoticeDetail(Long noticeId) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.NOTICE_NOT_FOUND));
 
         notice.setViewCount(notice.getViewCount() + 1);
 
@@ -102,7 +102,7 @@ public class NoticeService {
     @Transactional
     public void deleteNotice(Long id, Long noticeId) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!user.getRole().equals(Role.ADMIN)) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
@@ -116,7 +116,7 @@ public class NoticeService {
 
         // 유저 확인
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         // ADMIN 권한 확인
         if (!user.getRole().equals(Role.ADMIN)) {
@@ -125,7 +125,7 @@ public class NoticeService {
 
         // 수정할 공지사항 가져오기
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.NOTICE_NOT_FOUND));
 
         // 제목 수정 (존재할 경우)
         if (request.getTitle() != null) {
@@ -174,13 +174,13 @@ public class NoticeService {
 
     public void setPopNotice(Long id, Long noticeId) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!user.getRole().equals(Role.ADMIN)) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
 
-        noticeRepository.findById(noticeId).orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+        noticeRepository.findById(noticeId).orElseThrow(() -> CustomException.of(Error.NOTICE_NOT_FOUND));
 
         String key = "popup_notice_id";
 
@@ -196,7 +196,7 @@ public class NoticeService {
         Long noticeId = Long.valueOf(redisUtil.getData("popup_notice_id"));
 
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.NOTICE_NOT_FOUND));
 
         List<NoticeFileDTO> noticeFiles = noticeFileRepository.findByNoticeId(noticeId).stream()
                 .map(NoticeFileDTO::of)

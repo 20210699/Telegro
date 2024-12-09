@@ -41,14 +41,14 @@ public class UserController implements UserControllerDocs{
     public SuccessResponse<?> getUserDetail(Long id, Long userId) {
 
         User currentUser = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!currentUser.getRole().equals(Role.ADMIN)){
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(companyRepository.findByUserId(user.getId()).isPresent()){
             return SuccessResponse.of(companyService.getCompanyDetail(userId));
@@ -68,7 +68,7 @@ public class UserController implements UserControllerDocs{
     public SuccessResponse<Long> updateUser(@LoginInfo Long id, @PathVariable Long userId, @RequestBody UserRequestDTO requestDTO) {
 
         User currentUser = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if (!Role.ADMIN.equals(currentUser.getRole())) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
