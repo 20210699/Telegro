@@ -6,7 +6,7 @@ import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
-import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDto;
+import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
 import com.telegro.telegro.domain.payment.service.PaymentService;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
@@ -43,7 +43,7 @@ public class PaymentController implements PaymentControllerDocs{
     }
 
     @PostMapping("/order/payment/{imp_uid}")
-    public IamportResponse<Payment> validateIamport(Long id, String imp_uid, PaymentRequestDto request) throws IamportResponseException,IOException {
+    public IamportResponse<Payment> validateIamport(Long id, String imp_uid, PaymentRequestDTO request) throws IamportResponseException,IOException {
 
         IamportResponse<Payment> payment = iamportClient.paymentByImpUid(imp_uid);
 

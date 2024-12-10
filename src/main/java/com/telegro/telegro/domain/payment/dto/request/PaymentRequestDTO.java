@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentRequestDto {
+public class PaymentRequestDTO {
     private Long orderId;
     private Long price;
 }

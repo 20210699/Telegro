@@ -5,7 +5,7 @@ import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
-import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDto;
+import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
 import com.telegro.telegro.domain.payment.entity.PaymentHistory;
 import com.telegro.telegro.domain.payment.repository.PaymentRepository;
 import com.telegro.telegro.domain.product.entity.Product;
@@ -30,7 +30,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final CartRepository cartRepository;
 
-    public void processPaymentDone(Long id, PaymentRequestDto request) {
+    public void processPaymentDone(Long id, PaymentRequestDTO request) {
 
         Long orderId = request.getOrderId();
         Long totalPrice = request.getPrice();
