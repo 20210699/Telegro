@@ -56,7 +56,7 @@ public class OrderService {
         Long userId = carts.get(0).getUser().getId();
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         // 모든 장바구니의 userId가 동일한지 확인
         boolean sameUser = carts.stream()
@@ -72,7 +72,7 @@ public class OrderService {
 
     public temporaryOrderDTO getOrderInfo(Long id, List<Long> cartId) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         List<Cart> carts = cartRepository.findByIdIn(cartId);
 
@@ -113,7 +113,7 @@ public class OrderService {
         String merchantUid = generateMerchantUid(); //주문번호 생성
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!user.getId().equals(temporaryOrder.getUser().getId())) {
             log.error("User is not the same");
@@ -150,8 +150,8 @@ public class OrderService {
         BigDecimal totalPrice = BigDecimal.ZERO;
 
         for (Cart cart : temporaryOrder.getCarts()) {
-            totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
-            cart.setCartStatus(CartStatus.ORDERED); // Todo : 주문이 성공하면 CartStatus를 ORDERED로 수정
+            totalPrice = totalPrice.add(cart.getTotalPrice());
+            cart.setCartStatus(CartStatus.ORDERED);
             cartRepository.save(cart);
         }
 
@@ -185,7 +185,7 @@ public class OrderService {
     // 주문한 상품 목록
     public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         PageRequest pageRequest = PageRequest.of(page, size);
 
@@ -212,7 +212,7 @@ public class OrderService {
                         username = order.getUser().getUsername();
                     } else {
                         Company company = companyRepository.findByUserId(order.getUser().getId())
-                                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                                .orElseThrow(() -> CustomException.of(Error.COMPANY_NOT_FOUND));
                         username = company.getCompanyName();
                     }
                     UserOrderInfoDTO userDTO = UserOrderInfoDTO.of(order.getUser(), username);
@@ -254,14 +254,14 @@ public class OrderService {
 
     public void updateOrderStatus(Long id, Long orderId, OrderStatus status) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!user.getRole().equals(Role.ADMIN)) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
         order.setOrderStatus(status);
         orderRepository.save(order);

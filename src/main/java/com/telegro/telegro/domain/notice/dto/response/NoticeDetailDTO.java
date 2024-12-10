@@ -1,7 +1,5 @@
 package com.telegro.telegro.domain.notice.dto.response;
 
-import com.telegro.telegro.domain.notice.entity.Notice;
-import com.telegro.telegro.domain.notice.entity.NoticeFile;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 

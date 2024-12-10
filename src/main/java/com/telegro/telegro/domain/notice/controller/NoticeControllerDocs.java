@@ -1,7 +1,5 @@
 package com.telegro.telegro.domain.notice.controller;
 
-import com.telegro.telegro.domain.cart.dto.request.CartRequestDTO;
-import com.telegro.telegro.domain.cart.dto.response.CreatedCartDTO;
 import com.telegro.telegro.domain.notice.dto.response.CreatedNoticeDTO;
 import com.telegro.telegro.domain.notice.dto.response.NoticeDetailDTO;
 import com.telegro.telegro.domain.notice.dto.response.NoticeListDTO;

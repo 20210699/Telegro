@@ -1,12 +1,9 @@
 package com.telegro.telegro.domain.user.dto.response;
 
-import com.telegro.telegro.domain.user.entity.DeliveryAddress;
-import com.telegro.telegro.domain.user.entity.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Builder

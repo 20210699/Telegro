@@ -1,18 +1,12 @@
 package com.telegro.telegro.domain.order.dto.response;
 
 import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
-import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
-import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentMethod;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
-import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
 import com.telegro.telegro.domain.user.dto.response.DeliveryAddressDetailDTO;
-import com.telegro.telegro.domain.user.dto.response.UserInfoDTO;
 import com.telegro.telegro.domain.user.dto.response.UserOrderInfoDTO;
-import com.telegro.telegro.domain.user.entity.DeliveryAddress;
-import com.telegro.telegro.domain.user.entity.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 

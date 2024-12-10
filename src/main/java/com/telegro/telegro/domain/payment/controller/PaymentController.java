@@ -6,8 +6,10 @@ import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
-import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDto;
+import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
 import com.telegro.telegro.domain.payment.service.PaymentService;
+import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
+import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("api/v1")
@@ -41,9 +42,8 @@ public class PaymentController implements PaymentControllerDocs{
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
 
-    @Override
     @PostMapping("/order/payment/{imp_uid}")
-    public IamportResponse<Payment> validateIamport(Long id, String imp_uid, PaymentRequestDto request) throws IamportResponseException,IOException {
+    public IamportResponse<Payment> validateIamport(Long id, String imp_uid, PaymentRequestDTO request) throws IamportResponseException,IOException {
 
         IamportResponse<Payment> payment = iamportClient.paymentByImpUid(imp_uid);
 
@@ -60,7 +60,8 @@ public class PaymentController implements PaymentControllerDocs{
 
         for(Long cartId : cartIds){
             Cart cart = cartRepository.findById(cartId)
-                    .orElseThrow(() -> new NoSuchElementException("삭제할 장바구니를 찾을 수 없습니다."));
+                    .orElseThrow(() -> CustomException.of(Error.CART_NOT_FOUND));
+
             cartRepository.delete(cart);
         }
         httpSession.removeAttribute("temporaryOrder");

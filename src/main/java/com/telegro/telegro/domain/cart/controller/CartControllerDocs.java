@@ -2,10 +2,7 @@ package com.telegro.telegro.domain.cart.controller;
 
 import com.telegro.telegro.domain.cart.dto.request.CartRequestDTO;
 import com.telegro.telegro.domain.cart.dto.response.CartListDTO;
-import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.dto.response.CreatedCartDTO;
-import com.telegro.telegro.domain.product.dto.request.ProductRequestDTO;
-import com.telegro.telegro.domain.product.dto.response.CreatedProductDTO;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,8 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.List;
 
 public interface CartControllerDocs {
     @Operation(description = "장바구니에 상품을 등록합니다.")
