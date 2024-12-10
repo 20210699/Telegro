@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("api/v1")
@@ -43,7 +42,6 @@ public class PaymentController implements PaymentControllerDocs{
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
 
-    @Override
     @PostMapping("/order/payment/{imp_uid}")
     public IamportResponse<Payment> validateIamport(Long id, String imp_uid, PaymentRequestDto request) throws IamportResponseException,IOException {
 
@@ -63,6 +61,7 @@ public class PaymentController implements PaymentControllerDocs{
         for(Long cartId : cartIds){
             Cart cart = cartRepository.findById(cartId)
                     .orElseThrow(() -> CustomException.of(Error.CART_NOT_FOUND));
+
             cartRepository.delete(cart);
         }
         httpSession.removeAttribute("temporaryOrder");

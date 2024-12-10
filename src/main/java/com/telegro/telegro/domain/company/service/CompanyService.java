@@ -1,10 +1,8 @@
 package com.telegro.telegro.domain.company.service;
 
-import com.telegro.telegro.domain.company.dto.request.CompanyRequestDTO;
 import com.telegro.telegro.domain.company.dto.response.CompanyDetailDTO;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
-import com.telegro.telegro.domain.user.dto.request.UserRequestDTO;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;

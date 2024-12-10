@@ -1,6 +1,5 @@
 package com.telegro.telegro.domain.company.controller;
 
-import com.telegro.telegro.domain.company.dto.request.CompanyRequestDTO;
 import com.telegro.telegro.domain.company.dto.request.CompanySignUpDTO;
 import com.telegro.telegro.domain.company.dto.response.CompanyDetailDTO;
 import com.telegro.telegro.domain.company.service.CompanyService;
@@ -11,9 +10,7 @@ import com.telegro.telegro.domain.user.service.UserService;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
-import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

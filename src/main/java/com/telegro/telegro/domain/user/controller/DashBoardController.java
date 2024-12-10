@@ -5,7 +5,6 @@ import com.telegro.telegro.domain.user.dto.hitDTO;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.UserRepository;
-import com.telegro.telegro.domain.user.service.UserService;
 import com.telegro.telegro.domain.user.service.VisitService;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;

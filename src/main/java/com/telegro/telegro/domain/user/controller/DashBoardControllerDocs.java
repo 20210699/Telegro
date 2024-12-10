@@ -1,8 +1,6 @@
 package com.telegro.telegro.domain.user.controller;
 
 import com.telegro.telegro.domain.user.dto.HitListDTO;
-import com.telegro.telegro.domain.user.dto.response.UserListDTO;
-import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import io.swagger.v3.oas.annotations.Operation;

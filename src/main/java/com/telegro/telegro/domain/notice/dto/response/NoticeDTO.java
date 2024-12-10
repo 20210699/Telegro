@@ -4,7 +4,6 @@ import com.telegro.telegro.domain.notice.entity.Notice;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Builder

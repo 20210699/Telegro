@@ -1,16 +1,13 @@
 package com.telegro.telegro.domain.company.controller;
 
-import com.telegro.telegro.domain.company.dto.request.CompanyRequestDTO;
 import com.telegro.telegro.domain.company.dto.request.CompanySignUpDTO;
 import com.telegro.telegro.domain.company.dto.response.CompanyDetailDTO;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 public interface CompanyControllerDocs {
     @Operation(summary = "공급 업체를 등록합니다.")

@@ -2,8 +2,6 @@ package com.telegro.telegro.global.aws.service;
 
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.Headers;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.telegro.telegro.global.aws.dto.PresignedUrlDto;
 import lombok.RequiredArgsConstructor;

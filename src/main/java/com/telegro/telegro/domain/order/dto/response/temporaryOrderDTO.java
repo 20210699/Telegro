@@ -1,7 +1,6 @@
 package com.telegro.telegro.domain.order.dto.response;
 
 import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
-import com.telegro.telegro.domain.cart.entity.Cart;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
