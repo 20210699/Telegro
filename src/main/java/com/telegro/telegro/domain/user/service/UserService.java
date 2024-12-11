@@ -70,7 +70,7 @@ public class UserService {
         }
     }
 
-    public Long getUserId(LoginRequestDto loginRequestDto) {
+    public User getUser(LoginRequestDto loginRequestDto) {
         User user = userRepository.findByUserId(loginRequestDto.id());
         if (user == null) {
             throw CustomException.of(Error.USER_NOT_FOUND);
@@ -79,7 +79,7 @@ public class UserService {
         if (!passwordEncoder.matches(loginRequestDto.password(), user.getPassword())) {
             throw CustomException.of(Error.INVALID_ID_PASSWORD);
         }
-        return user.getId();
+        return user;
     }
 
     @Transactional

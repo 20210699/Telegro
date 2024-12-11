@@ -16,13 +16,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/file")
 @RequiredArgsConstructor
 public class FileController {
-	private final FileService fileService;
+    private final FileService fileService;
 
 	@PostMapping
-	public SuccessResponse<PresignedUrlDto> getPresignedUrl(@LoginInfo Long id,
-															@RequestParam @Parameter(description = "이미지 저장 시 prefix",
-			examples = {@ExampleObject(name = "product 관련 이미지", value = "product"), @ExampleObject(name = "notice 관련 파일", value = "notice")}) String prefix) {
-		return SuccessResponse.of(fileService.createPresignedUrl(prefix, id));
-	}
+	public SuccessResponse<PresignedUrlDto> getPresignedUrl(
+			@LoginInfo Long id,
+			@RequestParam
+			@Parameter(description = "이미지 저장 시 prefix",
+					examples = {
+							@ExampleObject(name = "product 관련 이미지", value = "product"),
+							@ExampleObject(name = "notice 관련 파일", value = "notice")
+					}) String prefix,
+			@RequestParam(required = false)
+			@Parameter(description = "파일명") String fileName) {
 
+		return SuccessResponse.of(fileService.createPresignedUrl(prefix, id, fileName));
+	}
 }

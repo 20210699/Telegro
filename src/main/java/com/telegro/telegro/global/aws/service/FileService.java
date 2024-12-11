@@ -21,21 +21,20 @@ public class FileService {
 	private String bucket;
 	private final AmazonS3 amazonS3;
 
-	public PresignedUrlDto createPresignedUrl(String prefix, Long id) {
-		String path = generatePath(prefix, id);
+	public PresignedUrlDto createPresignedUrl(String prefix, Long id, String fileName) {
+		String path = generatePath(prefix, id, fileName);
 		GeneratePresignedUrlRequest generatePresignedUrlRequest = new GeneratePresignedUrlRequest(bucket, path)
-			.withMethod(HttpMethod.PUT)
-			.withExpiration(getPresignedUrlExpiration());
-
-//		generatePresignedUrlRequest.addRequestParameter(
-//			Headers.S3_CANNED_ACL, CannedAccessControlList.PublicRead.toString());
+				.withMethod(HttpMethod.PUT)
+				.withExpiration(getPresignedUrlExpiration());
 
 		return PresignedUrlDto.builder()
-			.url(amazonS3.generatePresignedUrl(generatePresignedUrlRequest).toString()).build();
+				.url(amazonS3.generatePresignedUrl(generatePresignedUrlRequest).toString()).build();
 	}
 
-	private String generatePath(String prefix, Long id) {
-		String fileName = UUID.randomUUID().toString()+"-"+String.valueOf(id);
+	private String generatePath(String prefix, Long id, String fileName) {
+		if (fileName == null || fileName.isEmpty()) {
+			fileName = UUID.randomUUID().toString() + "-" + id;
+		}
 		return String.format("%s/%s", prefix, fileName);
 	}
 
@@ -44,7 +43,6 @@ public class FileService {
 		long expTimeMillis = expiration.getTime();
 		expTimeMillis += 1000 * 60 * 2;
 		expiration.setTime(expTimeMillis);
-
 		return expiration;
 	}
 }

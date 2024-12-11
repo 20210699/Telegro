@@ -1,5 +1,6 @@
 package com.telegro.telegro.global.auth.controller;
 
+import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.service.UserService;
 import com.telegro.telegro.domain.user.service.VisitService;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
@@ -29,13 +30,14 @@ public class AuthController implements AuthControllerDocs {
 
   @PostMapping("/login")
   public SuccessResponse<LoginDto> login(LoginRequestDto loginRequestDto, HttpServletRequest request, HttpServletResponse response) {
-      Long id = userService.getUserId(loginRequestDto);
-      String jwtToken = jwtUtil.createJwt(id, 60 * 60 * 60 * 1000L);
+      User user = userService.getUser(loginRequestDto);
+      String jwtToken = jwtUtil.createJwt(user.getId(), 60 * 60 * 60 * 1000L);
 
-      visitService.mergeAnonymousVisitToUser(request, response, id);
+      visitService.mergeAnonymousVisitToUser(request, response, user.getId());
 
       LoginDto loginDto = LoginDto.builder()
-              .accessToken(jwtToken).build();;
+              .userRole(user.getRole())
+              .accessToken(jwtToken).build();
 
       return SuccessResponse.of(loginDto);
   }
