@@ -100,20 +100,8 @@ public class OrderService {
                 .build();
     }
 
-//    private String generateMerchantUid() {
-//        // 현재 날짜와 시간을 포함한 고유한 문자열 생성
-//        String uniqueString = UUID.randomUUID().toString().replace("-", "");
-//        LocalDateTime today = LocalDateTime.now();
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//        String formattedDay = today.format(formatter).replace("-", "");
-//
-//        // 무작위 문자열과 현재 날짜/시간을 조합하여 주문번호 생성
-//        return formattedDay +'-'+ uniqueString;
-//    }
-
     @Transactional
     public OrderResponseDTO orderConfirm(Long id, Order temporaryOrder, OrderRequestDTO request) {
-//        String merchantUid = generateMerchantUid(); //주문번호 생성
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
@@ -140,7 +128,6 @@ public class OrderService {
                 .orElseGet(() -> deliveryAddressRepository.save(deliveryAddress));
 
         Order order = Order.builder()
-//                .orderNumber(merchantUid)
                 .orderStatus(OrderStatus.ORDER_COMPLETED)
                 .paymentMethod(request.paymentMethod())
                 .paymentStatus(PaymentStatus.PENDING)
