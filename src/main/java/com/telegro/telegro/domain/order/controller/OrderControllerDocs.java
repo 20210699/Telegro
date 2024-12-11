@@ -37,7 +37,7 @@ public interface OrderControllerDocs {
 
     @Operation(summary = "주문의 상세 정보를 조회합니다.")
     @ApiResponse(responseCode = "200", description = "주문 상세 조회 성공")
-    public SuccessResponse<OrderDetailResponseDTO> getOrderDetail(@PathVariable Long orderId);
+    public SuccessResponse<OrderDetailResponseDTO> getOrderDetail(@LoginInfo Long id, @PathVariable Long orderId);
 
     @Operation(summary = "주문 상태를 변경합니다.")
     @ApiResponse(responseCode = "200", description = "주문 상태 변경 성공")

@@ -269,10 +269,16 @@ public class OrderService {
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
 
-    public OrderDetailResponseDTO getOrderDetail(Long orderId) {
+    public OrderDetailResponseDTO getOrderDetail(Long id, Long orderId) {
         try {
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+
+            if (!(order.getUser().getRole().equals(Role.ADMIN)
+                    || order.getUser().equals(userRepository.findById(id)
+                    .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND))))) {
+                throw CustomException.of(Error.INVALID_TOKEN_ERROR);
+            }
 
             Payment payment = iamportClient.paymentByImpUid(order.getOrderNumber()).getResponse();
 

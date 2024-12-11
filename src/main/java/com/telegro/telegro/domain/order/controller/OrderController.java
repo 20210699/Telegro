@@ -57,8 +57,8 @@ public class OrderController implements OrderControllerDocs{
     }
 
     @GetMapping("/{orderId}")
-    public SuccessResponse<OrderDetailResponseDTO> getOrderDetail(Long orderId) {
-        return SuccessResponse.of(orderService.getOrderDetail(orderId));
+    public SuccessResponse<OrderDetailResponseDTO> getOrderDetail(Long id, Long orderId) {
+        return SuccessResponse.of(orderService.getOrderDetail(id, orderId));
     }
 
     @PatchMapping("/{orderId}")
