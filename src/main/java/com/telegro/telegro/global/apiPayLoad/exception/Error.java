@@ -40,7 +40,8 @@ public enum Error {
 
     /* 500 */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50000, "서버 에러가 발생했습니다."),
-    EXTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50001, "외부 API와 통신에 실패했습니다.");
+    EXTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50001, "외부 API와 통신에 실패했습니다."),
+    PAYMENT_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 50002, "결제 정보 조회 중 오류 발생했습니다.");
 
 
     private final HttpStatus httpStatus;

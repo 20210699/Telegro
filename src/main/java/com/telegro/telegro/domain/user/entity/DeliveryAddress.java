@@ -18,6 +18,12 @@ public class DeliveryAddress extends BaseEntity {
     private String name;
 
     @Column
+    private String recipientName;
+
+    @Column
+    private String phoneNumber;
+
+    @Column
     private String address;
 
     @Column

@@ -15,7 +15,7 @@ public record OrderRequestDTO(
         String request,
         @Schema(description = "배송비")
         BigDecimal shoppingCost,
-        @Schema(description = "사용할 적립금") // Todo : 사용자 point < 사용할 적립금 이면 결제 불가
+        @Schema(description = "사용할 적립금")
         BigDecimal pointsToUse,
         @Schema(description = "적립될 적립금")
         BigDecimal pointsToEarn,

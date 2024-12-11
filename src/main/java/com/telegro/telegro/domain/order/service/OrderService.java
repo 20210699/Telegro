@@ -1,5 +1,8 @@
 package com.telegro.telegro.domain.order.service;
 
+import com.siot.IamportRestClient.IamportClient;
+import com.siot.IamportRestClient.exception.IamportResponseException;
+import com.siot.IamportRestClient.response.Payment;
 import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
 import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
@@ -8,14 +11,12 @@ import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
-import com.telegro.telegro.domain.order.dto.response.OrderDetailDTO;
-import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
-import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
-import com.telegro.telegro.domain.order.dto.response.temporaryOrderDTO;
+import com.telegro.telegro.domain.order.dto.response.*;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
+import com.telegro.telegro.domain.payment.dto.response.PaymentDTO;
 import com.telegro.telegro.domain.user.dto.response.UserOrderInfoDTO;
 import com.telegro.telegro.domain.user.entity.DeliveryAddress;
 import com.telegro.telegro.domain.user.entity.User;
@@ -24,20 +25,21 @@ import com.telegro.telegro.domain.user.repository.DeliveryAddressRepository;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -48,6 +50,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final DeliveryAddressRepository deliveryAddressRepository;
     private final CompanyRepository companyRepository;
+    private IamportClient iamportClient;
 
     @Transactional
     public Order createOrder(Long id, List<Long> cartId) {
@@ -97,20 +100,20 @@ public class OrderService {
                 .build();
     }
 
-    private String generateMerchantUid() {
-        // 현재 날짜와 시간을 포함한 고유한 문자열 생성
-        String uniqueString = UUID.randomUUID().toString().replace("-", "");
-        LocalDateTime today = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String formattedDay = today.format(formatter).replace("-", "");
-
-        // 무작위 문자열과 현재 날짜/시간을 조합하여 주문번호 생성
-        return formattedDay +'-'+ uniqueString;
-    }
+//    private String generateMerchantUid() {
+//        // 현재 날짜와 시간을 포함한 고유한 문자열 생성
+//        String uniqueString = UUID.randomUUID().toString().replace("-", "");
+//        LocalDateTime today = LocalDateTime.now();
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+//        String formattedDay = today.format(formatter).replace("-", "");
+//
+//        // 무작위 문자열과 현재 날짜/시간을 조합하여 주문번호 생성
+//        return formattedDay +'-'+ uniqueString;
+//    }
 
     @Transactional
     public OrderResponseDTO orderConfirm(Long id, Order temporaryOrder, OrderRequestDTO request) {
-        String merchantUid = generateMerchantUid(); //주문번호 생성
+//        String merchantUid = generateMerchantUid(); //주문번호 생성
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
@@ -127,8 +130,9 @@ public class OrderService {
         // 배송지 중복성 검사 후 중복하지 않으면 새로운 데이터로 저장
         DeliveryAddress deliveryAddress = request.deliveryAddress();
         DeliveryAddress savedAddress = deliveryAddressRepository
-                .findByUserAndAddressAndAddressDetailAndZipcode(
+                .findByUserAndRecipientNameAndAddressAndAddressDetailAndZipcode(
                         user,
+                        deliveryAddress.getRecipientName(),
                         deliveryAddress.getAddress(),
                         deliveryAddress.getAddressDetail(),
                         deliveryAddress.getZipcode()
@@ -136,7 +140,7 @@ public class OrderService {
                 .orElseGet(() -> deliveryAddressRepository.save(deliveryAddress));
 
         Order order = Order.builder()
-                .orderNumber(merchantUid)
+//                .orderNumber(merchantUid)
                 .orderStatus(OrderStatus.ORDER_COMPLETED)
                 .paymentMethod(request.paymentMethod())
                 .paymentStatus(PaymentStatus.PENDING)
@@ -200,7 +204,7 @@ public class OrderService {
         int totalPage = orders.getTotalPages();
         long totalElement = orders.getTotalElements();
 
-        // 카트에 담긴 상품 중에 주문한 것
+        // 카트에 담긴 상품 중에 주문한 것 -> TODO : 현재 문제 발생, 사용자가 주문한 모든 물건이 한 주문에 보임
         List<CartProductDTO> products = cartRepository.findAllOrderedByUser(user).stream()
                 .map(CartProductDTO::of)
                 .toList();
@@ -266,4 +270,30 @@ public class OrderService {
         order.setOrderStatus(status);
         orderRepository.save(order);
     }
+
+    @Value("${imp.api.apikey}")
+    private String apiKey;
+
+    @Value("${imp.api.secretkey}")
+    private String secretKey;
+
+    @PostConstruct
+    public void init() {
+        this.iamportClient = new IamportClient(apiKey, secretKey);
+    }
+
+    public OrderDetailResponseDTO getOrderDetail(Long orderId) {
+        try {
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+
+            Payment payment = iamportClient.paymentByImpUid(order.getOrderNumber()).getResponse();
+
+            return OrderDetailResponseDTO.of(order, payment.getAmount(), PaymentDTO.of(payment));
+
+        } catch (IamportResponseException | IOException e) {
+            throw CustomException.of(Error.PAYMENT_FETCH_FAILED);
+        }
+    }
+
 }

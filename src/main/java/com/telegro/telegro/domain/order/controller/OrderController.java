@@ -1,6 +1,7 @@
 package com.telegro.telegro.domain.order.controller;
 
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
+import com.telegro.telegro.domain.order.dto.response.OrderDetailResponseDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
 import com.telegro.telegro.domain.order.dto.response.temporaryOrderDTO;
@@ -45,16 +46,19 @@ public class OrderController implements OrderControllerDocs{
         Order temporaryOrder = (Order) httpSession.getAttribute("temporaryOrder");
 
         if (temporaryOrder == null) {
-            log.error("Order not found");
             throw CustomException.of(Error.ORDER_NOT_FOUND);
         }
-
         return SuccessResponse.of(orderService.orderConfirm(id, temporaryOrder, request));
     }
 
     @GetMapping
     public SuccessResponse<OrderListDTO> getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size){
         return SuccessResponse.of(orderService.getOrders(id, startDate, endDate, page, size));
+    }
+
+    @GetMapping("/{orderId}")
+    public SuccessResponse<OrderDetailResponseDTO> getOrderDetail(Long orderId) {
+        return SuccessResponse.of(orderService.getOrderDetail(orderId));
     }
 
     @PatchMapping("/{orderId}")

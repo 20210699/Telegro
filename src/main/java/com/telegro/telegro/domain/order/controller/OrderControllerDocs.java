@@ -1,9 +1,8 @@
 package com.telegro.telegro.domain.order.controller;
 
+import com.telegro.telegro.domain.notice.dto.response.NoticeDetailDTO;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
-import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
-import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
-import com.telegro.telegro.domain.order.dto.response.temporaryOrderDTO;
+import com.telegro.telegro.domain.order.dto.response.*;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import com.telegro.telegro.global.auth.annotation.LoginInfo;
@@ -35,6 +34,10 @@ public interface OrderControllerDocs {
                                                    @RequestParam(value = "endDate", required = false) LocalDate endDate,
                                                    @RequestParam(value = "page",defaultValue = "0") int page,
                                                    @RequestParam(value = "size", defaultValue = "10") int size);
+
+    @Operation(summary = "주문의 상세 정보를 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "주문 상세 조회 성공")
+    public SuccessResponse<OrderDetailResponseDTO> getOrderDetail(@PathVariable Long orderId);
 
     @Operation(summary = "주문 상태를 변경합니다.")
     @ApiResponse(responseCode = "200", description = "주문 상태 변경 성공")
