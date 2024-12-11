@@ -49,7 +49,7 @@ public class PaymentController implements PaymentControllerDocs{
 
         log.info("결제 요청 응답. 결제 내역 - 주문 번호: {}", payment.getResponse().getMerchantUid());
 
-        paymentService.processPaymentDone(id, request);
+        paymentService.processPaymentDone(id, request, imp_uid);
 
         return payment;
     }

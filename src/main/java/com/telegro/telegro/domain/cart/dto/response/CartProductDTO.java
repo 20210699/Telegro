@@ -3,6 +3,7 @@ package com.telegro.telegro.domain.cart.dto.response;
 import com.telegro.telegro.domain.cart.entity.Cart;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 
@@ -22,7 +23,7 @@ public record CartProductDTO(
         String selectOption,
         @Schema(description = "기재한 옵션")
         String inputOption,
-        @Schema(description = "상품 금액")
+        @Schema(description = "상품 개별 금액")
         BigDecimal productPrice,
         @Schema(description = "주문 수량")
         int quantity,

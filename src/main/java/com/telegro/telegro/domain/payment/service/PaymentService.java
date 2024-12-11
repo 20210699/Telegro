@@ -30,13 +30,14 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final CartRepository cartRepository;
 
-    public void processPaymentDone(Long id, PaymentRequestDTO request) {
+    public void processPaymentDone(Long id, PaymentRequestDTO request, String imp_uid) {
 
         Long orderId = request.getOrderId();
         Long totalPrice = request.getPrice();
 
         Order currentOrder = orderRepository.findById(orderId)
                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+        currentOrder.setOrderNumber(imp_uid);
 
         currentOrder.setPaymentStatus(PaymentStatus.COMPLETED);
 

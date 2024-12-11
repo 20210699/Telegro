@@ -7,9 +7,13 @@ import lombok.Builder;
 @Builder
 public record DeliveryAddressDetailDTO (
         @Schema(description = "배송지 id")
-        Long id,
+        Long deliveryAddressId,
         @Schema(description = "배송지 별명")
         String name,
+        @Schema(description = "수령인 이름")
+        String recipientName,
+        @Schema(description = "수령인 연락처")
+        String phoneNumber,
         @Schema(description = "배송지 주소")
         String address,
         @Schema(description = "배송지 상세 주소")
@@ -21,8 +25,10 @@ public record DeliveryAddressDetailDTO (
 ){
         public static DeliveryAddressDetailDTO of(DeliveryAddress deliveryAddress, boolean isDefault) {
                 return DeliveryAddressDetailDTO.builder()
-                        .id(deliveryAddress.getId())
+                        .deliveryAddressId(deliveryAddress.getId())
                         .name(deliveryAddress.getName())
+                        .recipientName(deliveryAddress.getRecipientName())
+                        .phoneNumber(deliveryAddress.getPhoneNumber())
                         .address(deliveryAddress.getAddress())
                         .addressDetail(deliveryAddress.getAddressDetail())
                         .zipcode(deliveryAddress.getZipcode())

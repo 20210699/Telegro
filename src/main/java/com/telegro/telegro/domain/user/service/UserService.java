@@ -204,8 +204,8 @@ public class UserService {
         List<DeliveryAddressDetailDTO> addressDTOs = user.getDeliveryAddresses().stream()
                 .map(deliveryAddress ->
                         DeliveryAddressDetailDTO.of(deliveryAddress,
-                                Optional.ofNullable(defaultAddressId)
-                                        .map(addressId -> addressId.equals(deliveryAddress.getId())).orElse(false)))
+                                Optional.ofNullable(defaultAddressId).map(addressId -> addressId.equals(deliveryAddress.getId()))
+                                        .orElse(false)))
                 .toList();
 
         return UserInfoDTO.builder()
