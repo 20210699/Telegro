@@ -25,7 +25,7 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column
     private String orderNumber;
 
     @Enumerated(EnumType.STRING)
