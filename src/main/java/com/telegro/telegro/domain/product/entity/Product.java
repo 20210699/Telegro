@@ -1,6 +1,5 @@
 package com.telegro.telegro.domain.product.entity;
 
-import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.product.entity.enums.Category;
 import com.telegro.telegro.global.common.BaseEntity;
 import com.telegro.telegro.global.converter.StringListConverter;

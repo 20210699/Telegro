@@ -1,11 +1,9 @@
 package com.telegro.telegro.global.auth.argumentresolver;
 
 import com.telegro.telegro.domain.user.repository.UserRepository;
-import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

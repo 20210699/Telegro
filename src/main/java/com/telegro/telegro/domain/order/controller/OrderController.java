@@ -46,7 +46,7 @@ public class OrderController implements OrderControllerDocs{
 
         if (temporaryOrder == null) {
             log.error("Order not found");
-            throw CustomException.of(Error.NOT_FOUND_ERROR);
+            throw CustomException.of(Error.ORDER_NOT_FOUND);
         }
 
         return SuccessResponse.of(orderService.orderConfirm(id, temporaryOrder, request));

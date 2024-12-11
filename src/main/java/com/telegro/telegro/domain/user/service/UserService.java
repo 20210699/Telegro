@@ -45,7 +45,7 @@ public class UserService {
         User existUser = userRepository
                 .findByUserId(signUpUserInfoDto.getUserid());
 
-        if(existUser != null){
+        if (existUser != null) {
             throw CustomException.of(Error.NICKNAME_ALREADY_USED_ERROR);
         }
 
@@ -70,24 +70,24 @@ public class UserService {
         }
     }
 
-    public Long getUserId(LoginRequestDto loginRequestDto) {
+    public User getUser(LoginRequestDto loginRequestDto) {
         User user = userRepository.findByUserId(loginRequestDto.id());
         if (user == null) {
-            throw CustomException.of(Error.NOT_FOUND_ERROR);
+            throw CustomException.of(Error.USER_NOT_FOUND);
         }
 
         if (!passwordEncoder.matches(loginRequestDto.password(), user.getPassword())) {
             throw CustomException.of(Error.INVALID_ID_PASSWORD);
         }
-        return user.getId();
+        return user;
     }
 
     @Transactional
     public UserListDTO getUsers(Long id, Role filteredBy, int page, int size) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
-        if(!user.getRole().equals(Role.ADMIN)){
+        if (!user.getRole().equals(Role.ADMIN)) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
 
@@ -128,26 +128,27 @@ public class UserService {
                 .address(user.getAddress())
                 .addressDetail(user.getAddressDetail())
                 .zipCode(user.getZipCode())
+                .point(user.getPoint())
                 .build();
     }
 
     @Transactional
     public void deleteUser(Long id, Long userId) {
         User admin = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
-        if(!admin.getRole().equals(Role.ADMIN)){
+        if (!admin.getRole().equals(Role.ADMIN)) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         cartRepository.deleteByUser(user);
 
-        if(!user.getRole().equals(Role.ADMIN) && !user.getRole().equals(Role.MEMBER)){
+        if (!user.getRole().equals(Role.ADMIN) && !user.getRole().equals(Role.MEMBER)) {
             Optional<Company> company = companyRepository.findByUserId(userId);
-            if(company.isPresent()){
+            if (company.isPresent()) {
                 companyService.deleteCompany(userId);
             }
         }
@@ -158,7 +159,7 @@ public class UserService {
     @Transactional
     public Long updateUser(Long userId, User request) {
         User userToUpdate = userRepository.findById(userId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if (request.getUsername() != null) {
             userToUpdate.setUsername(request.getUsername());
@@ -193,7 +194,7 @@ public class UserService {
 
     public UserInfoDTO getMyPage(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         String key = getDefaultAddressKey(user.getId());
         Long defaultAddressId = Optional.ofNullable(redisUtil.getData(key))
@@ -220,7 +221,7 @@ public class UserService {
 
     public CreateAddressDTO addDeliveryAddress(Long id, DeliveryAddress request) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         DeliveryAddress address = DeliveryAddress.builder()
                 .name(request.getName())
@@ -236,17 +237,12 @@ public class UserService {
     }
 
     public void deleteDeliveryAddress(Long id, Long addressId) {
-        User currentUser = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+        userRepository.findById(id).orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         DeliveryAddress deliveryAddress = deliveryAddressRepository.findById(addressId)
                 .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 
-//        if(!deliveryAddress.getUser().getUserId().equals(currentUser.getUserId())){
-//            throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
-//        }
-
-        if(String.valueOf(deliveryAddress.getId()).equals(redisUtil.getData(getDefaultAddressKey(id)))){
+        if (String.valueOf(deliveryAddress.getId()).equals(redisUtil.getData(getDefaultAddressKey(id)))) {
             redisUtil.deleteData(getDefaultAddressKey(id));
         }
 
@@ -256,7 +252,7 @@ public class UserService {
 
     public CreateAddressDTO updateDeliveryAddress(Long id, Long addressId, DeliveryAddress request) {
         User currentUser = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
 
         DeliveryAddress existingAddress = deliveryAddressRepository.findById(addressId)
@@ -282,7 +278,7 @@ public class UserService {
 
     public void setDefaultDeliveryAddress(Long id, Long addressId) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         deliveryAddressRepository.findById(addressId).orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
 

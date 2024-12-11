@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -36,18 +37,19 @@ public class CartService {
     @Transactional
     public CreatedCartDTO addCartItem(Long userId, Long productId, CartRequestDTO request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.PRODUCT_NOT_FOUND));
 
         List<Cart> carts = cartRepository.findByUserAndProduct(user, product);
 
         BigDecimal productPrice = productService.selectPriceByUserRole(product, user);
 
         Cart cart = carts.stream()
-                .filter(existingCart -> existingCart.getSelectOption().equals(request.selectOption())
-                && existingCart.getInputOption().equals(request.inputOption()))
+                .filter(existingCart -> Objects.equals(existingCart.getSelectOption(), request.selectOption()) &&
+                        Objects.equals(existingCart.getInputOption(), request.inputOption()) &&
+                        CartStatus.IN_CART.equals(existingCart.getCartStatus()))
                 .findFirst()
                 .map(existingCart -> updateExistingCart(existingCart, request))
                 .orElseGet(() -> createNewCart(user, product, request, productPrice));
@@ -79,7 +81,7 @@ public class CartService {
     @Transactional
     public CartListDTO getCartItems(Long id, int page, int size) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         PageRequest pageRequest = PageRequest.of(page, size);
 
@@ -112,7 +114,7 @@ public class CartService {
     @Transactional
     public CreatedCartDTO updateCartItem(Long id, Long cartId, CartRequestDTO request) {
         Cart cart = cartRepository.findByIdAndUserId(cartId, id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.CART_NOT_FOUND));
 
         List<Cart> existingCarts = cartRepository.findByUserAndProduct(cart.getUser(), cart.getProduct()).stream()
                 .filter(c -> !c.getId().equals(cart.getId()) && c.getSelectOption().equals(request.selectOption())

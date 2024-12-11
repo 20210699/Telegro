@@ -1,14 +1,10 @@
 package com.telegro.telegro.domain.user.controller;
 
-import com.telegro.telegro.domain.company.dto.request.CompanySignUpDTO;
-import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.user.dto.request.UserRequestDTO;
 import com.telegro.telegro.domain.user.dto.response.CreateAddressDTO;
-import com.telegro.telegro.domain.user.dto.response.UserDetailDTO;
 import com.telegro.telegro.domain.user.dto.response.UserInfoDTO;
 import com.telegro.telegro.domain.user.dto.response.UserListDTO;
 import com.telegro.telegro.domain.user.entity.DeliveryAddress;
-import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import com.telegro.telegro.global.auth.annotation.LoginInfo;

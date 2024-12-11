@@ -36,7 +36,7 @@ public class ProductService {
     @Transactional
     public CreatedProductDTO createProduct(Long id, ProductRequestDTO request) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!user.getRole().toString().equals("ADMIN")) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
@@ -85,7 +85,7 @@ public class ProductService {
         Page<Product> products = productRepository.findByCategory(category, pageRequest);
 
         if (products.isEmpty()) {
-            throw CustomException.of(Error.NOT_FOUND_ERROR);
+            throw CustomException.of(Error.PRODUCT_NOT_FOUND);
         }
 
         // Product를 ProductResponseDTO로 변환
@@ -114,7 +114,7 @@ public class ProductService {
         }
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.PRODUCT_NOT_FOUND));
 
         BigDecimal price = selectPriceByUserRole(product, user);
 
@@ -138,7 +138,7 @@ public class ProductService {
     @Transactional
     public void deleteProduct(Long id, Long productId) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!user.getRole().toString().equals("ADMIN")) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
@@ -152,7 +152,7 @@ public class ProductService {
     public ProductDetailResponseDTO updateProduct(Long id, Long productId, Map<String, Object> request) {
         // 사용자 조회
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         // 권한 확인 (ADMIN만 수정 가능)
         if (!user.getRole().toString().equals("ADMIN")) {
@@ -161,7 +161,7 @@ public class ProductService {
 
         // 상품 조회
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.PRODUCT_NOT_FOUND));
 
         // 업데이트할 필드를 적용
         request.forEach((key, value) -> {

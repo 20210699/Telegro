@@ -56,7 +56,7 @@ public class OrderService {
         Long userId = carts.get(0).getUser().getId();
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         // 모든 장바구니의 userId가 동일한지 확인
         boolean sameUser = carts.stream()
@@ -72,7 +72,7 @@ public class OrderService {
 
     public temporaryOrderDTO getOrderInfo(Long id, List<Long> cartId) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         List<Cart> carts = cartRepository.findByIdIn(cartId);
 
@@ -113,7 +113,7 @@ public class OrderService {
         String merchantUid = generateMerchantUid(); //주문번호 생성
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!user.getId().equals(temporaryOrder.getUser().getId())) {
             log.error("User is not the same");
@@ -150,8 +150,8 @@ public class OrderService {
         BigDecimal totalPrice = BigDecimal.ZERO;
 
         for (Cart cart : temporaryOrder.getCarts()) {
-            totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
-            cart.setCartStatus(CartStatus.ORDERED); // Todo : 주문이 성공하면 CartStatus를 ORDERED로 수정
+            totalPrice = totalPrice.add(cart.getTotalPrice());
+            cart.setCartStatus(CartStatus.ORDERED);
             cartRepository.save(cart);
         }
 
@@ -170,12 +170,10 @@ public class OrderService {
         return OrderResponseDTO.builder()
                 .id(savedOrder.getId())
                 .createdAt(savedOrder.getCreatedAt())
-                .coverImage(savedOrder.getCarts().get(0).getProduct().getCoverImage())
                 .orderNumber(savedOrder.getOrderNumber())
                 .products(products)
                 .userName(savedOrder.getUser().getUsername())
                 .userPhone(savedOrder.getUser().getPhone())
-                .deliveryAddress(savedOrder.getDeliveryAddress())
                 .paymentMethod(savedOrder.getPaymentMethod())
                 .usedPoint(request.pointsToUse())
                 .shippingCost(savedOrder.getShippingCost())
@@ -187,52 +185,34 @@ public class OrderService {
     // 주문한 상품 목록
     public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
+
         PageRequest pageRequest = PageRequest.of(page, size);
 
         Page<Order> orders;
-
-        if(user.getRole().equals(Role.ADMIN)){
-            orders = orderRepository.findAll(pageRequest);
-            // Todo : 시작 날짜와 종료 날짜 반영되도록 수정
+        if (user.getRole().equals(Role.ADMIN)) {
+            orders = findOrdersByDateRange(startDate, endDate, pageRequest, null);
         } else {
-            if (startDate != null && endDate != null) {
-                // startDate와 endDate가 모두 있는 경우: 두 날짜 사이의 값
-                LocalDateTime startDateTime = startDate.atStartOfDay();
-                LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-                orders = orderRepository.findByCreatedAtBetweenAndUser(startDateTime, endDateTime, user, pageRequest);
-
-            } else if (startDate != null) {
-                // startDate만 있는 경우: 해당 날짜부터 현재까지의 값
-                LocalDateTime startDateTime = startDate.atStartOfDay();
-                orders = orderRepository.findByCreatedAtAfterAndUser(startDateTime, user, pageRequest);
-
-            } else if (endDate != null) {
-                // endDate만 있는 경우: 처음부터 해당 날짜까지의 값
-                LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-                orders = orderRepository.findByCreatedAtBeforeAndUser(endDateTime, user, pageRequest);
-
-            } else {
-                // startDate와 endDate가 모두 없는 경우: 전체 값
-                orders = orderRepository.findByUser(user, pageRequest);
-            }
+            orders = findOrdersByDateRange(startDate, endDate, pageRequest, user);
         }
 
         boolean isLast = orders.isLast();
         int totalPage = orders.getTotalPages();
         long totalElement = orders.getTotalElements();
 
-        // 카트에 담긴 상품 중에 주문한 거
-        List<CartProductDTO> products = cartRepository.findAllOrderedByUser(user).stream().map(CartProductDTO::of).toList();
+        // 카트에 담긴 상품 중에 주문한 것
+        List<CartProductDTO> products = cartRepository.findAllOrderedByUser(user).stream()
+                .map(CartProductDTO::of)
+                .toList();
 
         List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
                 .map(order -> {
                     String username;
-                    if(order.getUser().getRole().equals(Role.MEMBER)){
+                    if (order.getUser().getRole().equals(Role.MEMBER) || order.getUser().getRole().equals(Role.ADMIN)) {
                         username = order.getUser().getUsername();
                     } else {
                         Company company = companyRepository.findByUserId(order.getUser().getId())
-                                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                                .orElseThrow(() -> CustomException.of(Error.COMPANY_NOT_FOUND));
                         username = company.getCompanyName();
                     }
                     UserOrderInfoDTO userDTO = UserOrderInfoDTO.of(order.getUser(), username);
@@ -240,7 +220,6 @@ public class OrderService {
                     return OrderDetailDTO.of(order, products, userDTO);
                 })
                 .toList();
-
 
         return OrderListDTO.builder()
                 .isLast(isLast)
@@ -250,17 +229,39 @@ public class OrderService {
                 .build();
     }
 
+    private Page<Order> findOrdersByDateRange(LocalDate startDate, LocalDate endDate, PageRequest pageRequest, User user) {
+        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(23, 59, 59) : null;
+
+        if (startDateTime != null && endDateTime != null) {
+            return (user == null)
+                    ? orderRepository.findByCreatedAtBetween(startDateTime, endDateTime, pageRequest)
+                    : orderRepository.findByCreatedAtBetweenAndUser(startDateTime, endDateTime, user, pageRequest);
+        } else if (startDateTime != null) {
+            return (user == null)
+                    ? orderRepository.findByCreatedAtAfter(startDateTime, pageRequest)
+                    : orderRepository.findByCreatedAtAfterAndUser(startDateTime, user, pageRequest);
+        } else if (endDateTime != null) {
+            return (user == null)
+                    ? orderRepository.findByCreatedAtBefore(endDateTime, pageRequest)
+                    : orderRepository.findByCreatedAtBeforeAndUser(endDateTime, user, pageRequest);
+        } else {
+            return (user == null)
+                    ? orderRepository.findAll(pageRequest)
+                    : orderRepository.findByUser(user, pageRequest);
+        }
+    }
 
     public void updateOrderStatus(Long id, Long orderId, OrderStatus status) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!user.getRole().equals(Role.ADMIN)) {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
         order.setOrderStatus(status);
         orderRepository.save(order);

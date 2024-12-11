@@ -1,10 +1,8 @@
 package com.telegro.telegro.domain.company.service;
 
-import com.telegro.telegro.domain.company.dto.request.CompanyRequestDTO;
 import com.telegro.telegro.domain.company.dto.response.CompanyDetailDTO;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
-import com.telegro.telegro.domain.user.dto.request.UserRequestDTO;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
@@ -28,7 +26,7 @@ public class CompanyService {
     public void createCompany(String userId, Company companyRequestDTO) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw CustomException.of(Error.NOT_FOUND_ERROR);
+            throw CustomException.of(Error.USER_NOT_FOUND);
         }
 
         Company existCompany = companyRepository.findByCompanyName(companyRequestDTO.getCompanyName());
@@ -57,7 +55,7 @@ public class CompanyService {
     public CompanyDetailDTO getCompanyDetail(Long id){
 
         Company company = companyRepository.findByUserId(id)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.COMPANY_NOT_FOUND));
 
         return CompanyDetailDTO.builder()
                 .id(company.getUser().getId())
@@ -69,6 +67,7 @@ public class CompanyService {
                 .address(company.getUser().getAddress())
                 .addressDetail(company.getUser().getAddressDetail())
                 .zipCode(company.getUser().getZipCode())
+                .point(company.getUser().getPoint())
                 .managerName(company.getManagerName())
                 .managerPhone(company.getManagerPhone())
                 .companyName(company.getCompanyName())
@@ -83,7 +82,7 @@ public class CompanyService {
     public void deleteCompany(Long userId){
         Optional<Company> optionalCompany = companyRepository.findByUserId(userId);
         if (optionalCompany.isEmpty()) {
-            throw CustomException.of(Error.NOT_FOUND_ERROR);
+            throw CustomException.of(Error.COMPANY_NOT_FOUND);
         }
 
         try {
@@ -99,7 +98,7 @@ public class CompanyService {
     @Transactional
     public void updateCompany(Long userId, Company companyRequest){
         Company company = companyRepository.findByUserId(userId)
-                .orElseThrow(() -> CustomException.of(Error.NOT_FOUND_ERROR));
+                .orElseThrow(() -> CustomException.of(Error.COMPANY_NOT_FOUND));
 
         if (companyRequest.getManagerName() != null) {
             company.setManagerName(companyRequest.getManagerName());
