@@ -273,9 +273,10 @@ public class OrderService {
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
-            if (!(order.getUser().getRole().equals(Role.ADMIN)
-                    || order.getUser().equals(userRepository.findById(id)
-                    .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND))))) {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
+
+            if (!(user.getRole().equals(Role.ADMIN) || order.getUser().equals(user))) {
                 throw CustomException.of(Error.INVALID_TOKEN_ERROR);
             }
 
