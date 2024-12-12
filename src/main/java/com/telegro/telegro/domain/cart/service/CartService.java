@@ -117,32 +117,29 @@ public class CartService {
                 .orElseThrow(() -> CustomException.of(Error.CART_NOT_FOUND));
 
         List<Cart> existingCarts = cartRepository.findByUserAndProduct(cart.getUser(), cart.getProduct()).stream()
-                .filter(c -> !c.getId().equals(cart.getId()) && c.getSelectOption().equals(request.selectOption())
-                        && c.getInputOption().equals(request.inputOption()))
+                .filter(c -> !c.getId().equals(cart.getId())
+                        && Objects.equals(c.getSelectOption(), request.selectOption())
+                        && Objects.equals(c.getInputOption(), request.inputOption()))
                 .toList();
 
         if (!existingCarts.isEmpty()) {
             Cart existingCart = existingCarts.get(0);
             existingCart.setQuantity(existingCart.getQuantity() + request.quantity());
 
-            // Update totalPrice for merged cart item
             existingCart.setTotalPrice(existingCart.getPrice().multiply(BigDecimal.valueOf(existingCart.getQuantity())));
 
             cartRepository.delete(cart);
             Cart updatedCart = cartRepository.save(existingCart);
             return CreatedCartDTO.builder().id(updatedCart.getId()).build();
         } else {
-            cart.setSelectOption(request.selectOption());
-            cart.setInputOption(request.inputOption());
+            cart.setSelectOption(request.selectOption() != null ? request.selectOption() : cart.getSelectOption());
+            cart.setInputOption(request.inputOption() != null ? request.inputOption() : cart.getInputOption());
             cart.setQuantity(request.quantity());
 
-            // Update totalPrice for updated cart item
             cart.setTotalPrice(cart.getPrice().multiply(BigDecimal.valueOf(cart.getQuantity())));
 
             Cart updatedCart = cartRepository.save(cart);
             return CreatedCartDTO.builder().id(updatedCart.getId()).build();
         }
     }
-
-
 }
