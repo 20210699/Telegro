@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -174,11 +175,12 @@ public class OrderService {
 
 
     // 주문한 상품 목록
+    @Transactional(readOnly = true)
     public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
-        PageRequest pageRequest = PageRequest.of(page, size);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Order> orders;
         if (user.getRole().equals(Role.ADMIN)) {
@@ -191,13 +193,10 @@ public class OrderService {
         int totalPage = orders.getTotalPages();
         long totalElement = orders.getTotalElements();
 
-        // 카트에 담긴 상품 중에 주문한 것 -> TODO : 현재 문제 발생, 사용자가 주문한 모든 물건이 한 주문에 보임
-        List<CartProductDTO> products = cartRepository.findAllOrderedByUser(user).stream()
-                .map(CartProductDTO::of)
-                .toList();
-
         List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
                 .map(order -> {
+                    List<CartProductDTO> products = order.getCarts().stream().map(CartProductDTO::of).toList();
+
                     String username;
                     if (order.getUser().getRole().equals(Role.MEMBER) || order.getUser().getRole().equals(Role.ADMIN)) {
                         username = order.getUser().getUsername();
