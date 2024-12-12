@@ -174,6 +174,7 @@ public class OrderService {
 
 
     // 주문한 상품 목록
+    @Transactional(readOnly = true)
     public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
@@ -191,13 +192,10 @@ public class OrderService {
         int totalPage = orders.getTotalPages();
         long totalElement = orders.getTotalElements();
 
-        // 카트에 담긴 상품 중에 주문한 것 -> TODO : 현재 문제 발생, 사용자가 주문한 모든 물건이 한 주문에 보임
-        List<CartProductDTO> products = cartRepository.findAllOrderedByUser(user).stream()
-                .map(CartProductDTO::of)
-                .toList();
-
         List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
                 .map(order -> {
+                    List<CartProductDTO> products = order.getCarts().stream().map(CartProductDTO::of).toList();
+
                     String username;
                     if (order.getUser().getRole().equals(Role.MEMBER) || order.getUser().getRole().equals(Role.ADMIN)) {
                         username = order.getUser().getUsername();

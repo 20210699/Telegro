@@ -17,7 +17,7 @@ import java.util.List;
 @Builder
 public record OrderDetailDTO(
         @Schema(description = "주문 id")
-        Long id,
+        Long orderId,
         @Schema(description = "주문 번호")
         String orderNumber,
         @Schema(description = "상품 List")
@@ -40,7 +40,7 @@ public record OrderDetailDTO(
         public static OrderDetailDTO of(Order order, List<CartProductDTO> products, UserOrderInfoDTO user) {
                 DeliveryAddressDetailDTO deliveryAddressDetailDTO = DeliveryAddressDetailDTO.of(order.getDeliveryAddress(),true);
                 return OrderDetailDTO.builder()
-                        .id(order.getId())
+                        .orderId(order.getId())
                         .orderNumber(order.getOrderNumber())
                         .products(products)
                         .createdAt(order.getCreatedAt())
