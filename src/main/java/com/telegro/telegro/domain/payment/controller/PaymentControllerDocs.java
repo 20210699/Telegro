@@ -4,6 +4,7 @@ import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
 import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
+import com.telegro.telegro.domain.payment.dto.request.WebhookDTO;
 import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -24,4 +25,8 @@ public interface PaymentControllerDocs {
     @Operation(summary = "주문 정보 삭제", description = "결제 완료 화면에서 세션 저장값, 장바구니 삭제한다.")
     @ApiResponse(responseCode = "200", description = "주문 정보 삭제 성공")
     public void deleteSession();
+
+    @Operation(summary = "결제 상태 변경", description = "웹훅 수신을 받고 결제 검증 과정 거친 후 결제 상태를 변경한다.")
+    @ApiResponse(responseCode = "200", description = "결제 정보 변경 성공")
+    public void updatePaymentStatus(@RequestBody WebhookDTO request) throws IamportResponseException, IOException;
 }

@@ -8,8 +8,11 @@ import com.siot.IamportRestClient.response.Payment;
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.entity.Order;
+import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
+import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
 import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
+import com.telegro.telegro.domain.payment.dto.request.WebhookDTO;
 import com.telegro.telegro.domain.payment.service.PaymentService;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
@@ -25,7 +28,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/v1")
+@RequestMapping("")
 @RequiredArgsConstructor
 @Slf4j
 //Todo : url 통일성 있게 수정
@@ -48,7 +51,7 @@ public class PaymentController implements PaymentControllerDocs{
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
 
-    @PostMapping("/order/payment/{imp_uid}")
+    @PostMapping("api/v1/order/payment/{imp_uid}")
     public IamportResponse<Payment> validateIamport(Long id, String imp_uid, PaymentRequestDTO request) throws IamportResponseException,IOException {
 
         IamportResponse<Payment> payment = iamportClient.paymentByImpUid(imp_uid);
@@ -60,7 +63,7 @@ public class PaymentController implements PaymentControllerDocs{
         return payment;
     }
 
-    @PostMapping("/{orderId}")
+    @PostMapping("api/v1/{orderId}")
     public IamportResponse<Payment> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
 
         Order order = orderRepository.findById(orderId)
@@ -90,4 +93,33 @@ public class PaymentController implements PaymentControllerDocs{
         httpSession.removeAttribute("temporaryOrder");
         httpSession.removeAttribute("cartIds");
     }
- }
+
+    @PatchMapping("/payments/update")
+    public void updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
+
+        String paymentStatus = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse().getStatus();
+
+        if (request.getStatus().equals(paymentStatus)) {
+            Order order = orderRepository.findByOrderNumber(request.getImp_uid());
+
+            switch (paymentStatus) {
+                case "paid":
+                    order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
+                    order.setPaymentStatus(PaymentStatus.COMPLETED);
+                    break;
+                case "ready":
+                    order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
+                    order.setPaymentStatus(PaymentStatus.PENDING);
+                    break;
+                case "cancelled":
+                    order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+                    order.setPaymentStatus(PaymentStatus.CANCELLED);
+                    break;
+                default:
+                    throw new IllegalStateException("예상치 못한 결제 상태 : " + paymentStatus);
+            }
+        } else {
+            throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
+        }
+    }
+}

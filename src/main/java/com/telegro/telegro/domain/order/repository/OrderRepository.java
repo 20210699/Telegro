@@ -34,4 +34,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // 특정 사용자의 특정 날짜 이전의 주문 조회
     Page<Order> findByCreatedAtBeforeAndUser(LocalDateTime endDateTime, User user, Pageable pageable);
+
+    Order findByOrderNumber(String impUid);
 }
