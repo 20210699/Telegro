@@ -14,6 +14,9 @@ import com.telegro.telegro.domain.order.repository.OrderRepository;
 import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
 import com.telegro.telegro.domain.payment.dto.request.WebhookDTO;
 import com.telegro.telegro.domain.payment.service.PaymentService;
+import com.telegro.telegro.domain.user.entity.User;
+import com.telegro.telegro.domain.user.entity.enums.Role;
+import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import jakarta.annotation.PostConstruct;
@@ -31,12 +34,12 @@ import java.util.List;
 @RequestMapping("")
 @RequiredArgsConstructor
 @Slf4j
-//Todo : url 통일성 있게 수정
 public class PaymentController implements PaymentControllerDocs{
 
     private final HttpSession httpSession;
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
     private IamportClient iamportClient;
     private final PaymentService paymentService;
 
@@ -51,36 +54,37 @@ public class PaymentController implements PaymentControllerDocs{
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
 
-    @PostMapping("api/v1/order/payment/{imp_uid}")
+    @PostMapping("api/payments/{imp_uid}")
     public IamportResponse<Payment> validateIamport(Long id, String imp_uid, PaymentRequestDTO request) throws IamportResponseException,IOException {
 
         IamportResponse<Payment> payment = iamportClient.paymentByImpUid(imp_uid);
 
-        log.info("결제 요청 응답. 결제 내역 - 주문 번호: {}", payment.getResponse().getMerchantUid());
-
         paymentService.processPaymentDone(id, request, imp_uid);
 
-        return payment;
+        return payment; // Todo  : 주문 완료 화면에 맞는 DTO 생성
     }
 
-    @PostMapping("api/v1/{orderId}")
+    @PostMapping("api/payments/cancel/{orderId}")
     public IamportResponse<Payment> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
-        // Todo : 관리자 혹은 주문자만 결제 취소 가능
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
+
+        if(!(user.getRole().equals(Role.ADMIN) || user.equals(order.getUser()))) {
+            throw CustomException.of(Error.BAD_REQUEST_ERROR);
+        }
 
         CancelData cancelData = new CancelData(order.getOrderNumber(), true);
 
         IamportResponse<Payment> payment = iamportClient.cancelPaymentByImpUid(cancelData);
 
-        // Todo : 결제 취소 시 주문, 결제 상태 변경(웹훅으로 상태 관리)
-
-        return payment;
+        return payment; // Todo : 결제 취소 후 화면에 맞는 DTO 생성
     }
 
-    @GetMapping("/order/paymentconfirm")
+    /*@GetMapping("/order/paymentconfirm")
     public void deleteSession() {
         List<Long>cartIds = (List<Long>) httpSession.getAttribute("cartIds");
 
@@ -92,7 +96,7 @@ public class PaymentController implements PaymentControllerDocs{
         }
         httpSession.removeAttribute("temporaryOrder");
         httpSession.removeAttribute("cartIds");
-    }
+    }*/ // Todo : 세션 정보 삭제 로직 어떻게 처리?
 
     @Transactional
     @PostMapping("/payments/update")
@@ -122,6 +126,7 @@ public class PaymentController implements PaymentControllerDocs{
                 default:
                     throw new IllegalStateException("예상치 못한 결제 상태 : " + paymentStatus);
             }
+
             Order savedOrder = orderRepository.save(order);
             log.info("성공적으로 상태 변경 : {}", savedOrder.getOrderStatus().toString());
         } else {

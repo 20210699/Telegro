@@ -257,6 +257,7 @@ public class OrderService {
         orderRepository.save(order);
     }
 
+    // Todo : 코드에서 냄새남;; 근데 쩔 수 없음.. 영수증 정보 불러와야해서.. -> 개선 방향 고민
     @Value("${imp.api.apikey}")
     private String apiKey;
 

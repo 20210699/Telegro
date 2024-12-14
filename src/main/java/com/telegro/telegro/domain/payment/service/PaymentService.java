@@ -37,15 +37,15 @@ public class PaymentService {
 
         Order currentOrder = orderRepository.findById(orderId)
                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+
         currentOrder.setOrderNumber(imp_uid);
 
-        currentOrder.setPaymentStatus(PaymentStatus.COMPLETED);
+//        currentOrder.setPaymentStatus(PaymentStatus.COMPLETED);
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         createPaymentHistory(currentOrder, user, totalPrice);
-
     }
 
     private void createPaymentHistory(Order order, User user, Long totalPrice) {

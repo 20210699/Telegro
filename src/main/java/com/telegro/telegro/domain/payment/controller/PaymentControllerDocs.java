@@ -22,9 +22,9 @@ public interface PaymentControllerDocs {
     @ApiResponse(responseCode = "200", description = "결제 취소 성공")
     public IamportResponse<Payment> cancelPayment(@LoginInfo Long id, @PathVariable Long orderId) throws IamportResponseException, IOException;
 
-    @Operation(summary = "주문 정보 삭제", description = "결제 완료 화면에서 세션 저장값, 장바구니 삭제한다.")
-    @ApiResponse(responseCode = "200", description = "주문 정보 삭제 성공")
-    public void deleteSession();
+//    @Operation(summary = "주문 정보 삭제", description = "결제 완료 화면에서 세션 저장값, 장바구니 삭제한다.")
+//    @ApiResponse(responseCode = "200", description = "주문 정보 삭제 성공")
+//    public void deleteSession();
 
     @Operation(summary = "결제 상태 변경", description = "웹훅 수신을 받고 결제 검증 과정 거친 후 결제 상태를 변경한다.")
     @ApiResponse(responseCode = "200", description = "결제 정보 변경 성공")
