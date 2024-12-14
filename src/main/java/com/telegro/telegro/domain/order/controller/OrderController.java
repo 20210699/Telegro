@@ -42,12 +42,12 @@ public class OrderController implements OrderControllerDocs{
     @PostMapping("/done")
     public SuccessResponse<OrderResponseDTO> completeOrder(Long id, OrderRequestDTO request) {
 
-        // 세션에서 임시 주문 정보를 가져옴
         Order temporaryOrder = (Order) httpSession.getAttribute("temporaryOrder");
 
         if (temporaryOrder == null) {
             throw CustomException.of(Error.ORDER_NOT_FOUND);
         }
+
         return SuccessResponse.of(orderService.orderConfirm(id, temporaryOrder, request));
     }
 

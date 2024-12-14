@@ -5,7 +5,6 @@ import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.request.CancelData;
 import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
-import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
@@ -19,6 +18,7 @@ import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
+import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("")
@@ -54,7 +53,8 @@ public class PaymentController implements PaymentControllerDocs{
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
 
-    @PostMapping("api/payments/{imp_uid}")
+//    @PostMapping("api/payments/{imp_uid}")
+    @PostMapping("api/v1/order/payment/{imp_uid}")
     public IamportResponse<Payment> validateIamport(Long id, String imp_uid, PaymentRequestDTO request) throws IamportResponseException,IOException {
 
         IamportResponse<Payment> payment = iamportClient.paymentByImpUid(imp_uid);
@@ -65,7 +65,7 @@ public class PaymentController implements PaymentControllerDocs{
     }
 
     @PostMapping("api/payments/cancel/{orderId}")
-    public IamportResponse<Payment> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
+    public SuccessResponse<?> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
@@ -81,7 +81,7 @@ public class PaymentController implements PaymentControllerDocs{
 
         IamportResponse<Payment> payment = iamportClient.cancelPaymentByImpUid(cancelData);
 
-        return payment; // Todo : 결제 취소 후 화면에 맞는 DTO 생성
+        return SuccessResponse.of();
     }
 
     /*@GetMapping("/order/paymentconfirm")

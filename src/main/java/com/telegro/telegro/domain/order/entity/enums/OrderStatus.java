@@ -4,7 +4,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "주문 상태를 나타내는 열거형")
 public enum OrderStatus {
-    @Schema(description = "주문이 완료된 상태")
+    @Schema(description = "주문이 생성된 상태")
+    ORDER_CREATED,
+
+    @Schema(description = "주문이 접수된 상태")
     ORDER_COMPLETED,
 
     @Schema(description = "결제가 완료된 상태")

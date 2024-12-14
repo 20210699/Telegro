@@ -39,8 +39,7 @@ public class PaymentService {
                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
         currentOrder.setOrderNumber(imp_uid);
-
-//        currentOrder.setPaymentStatus(PaymentStatus.COMPLETED);
+        orderRepository.save(currentOrder);
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));

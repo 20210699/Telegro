@@ -108,7 +108,7 @@ public class OrderService {
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!user.getId().equals(temporaryOrder.getUser().getId())) {
-            log.error("User is not the same");
+            log.error("User is not the same"); // Todo : 로그 정리 (나중에 한꺼번에)
             throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
 
@@ -129,9 +129,9 @@ public class OrderService {
                 .orElseGet(() -> deliveryAddressRepository.save(deliveryAddress));
 
         Order order = Order.builder()
-                .orderStatus(OrderStatus.ORDER_COMPLETED)
+//                .orderStatus(OrderStatus.ORDER_COMPLETED)
                 .paymentMethod(request.paymentMethod())
-                .paymentStatus(PaymentStatus.PENDING)
+                .paymentStatus(PaymentStatus.FAILED)
                 .shippingCost(request.shoppingCost())
                 .request(request.request())
                 .carts(temporaryOrder.getCarts())

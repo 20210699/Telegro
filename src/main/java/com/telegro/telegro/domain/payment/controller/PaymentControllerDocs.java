@@ -5,6 +5,7 @@ import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
 import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
 import com.telegro.telegro.domain.payment.dto.request.WebhookDTO;
+import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,7 +21,7 @@ public interface PaymentControllerDocs {
 
     @Operation(summary = "결제 취소", description = "결제를 취소하고, 주문 상태를 변경한다")
     @ApiResponse(responseCode = "200", description = "결제 취소 성공")
-    public IamportResponse<Payment> cancelPayment(@LoginInfo Long id, @PathVariable Long orderId) throws IamportResponseException, IOException;
+    public SuccessResponse<?> cancelPayment(@LoginInfo Long id, @PathVariable Long orderId) throws IamportResponseException, IOException;
 
 //    @Operation(summary = "주문 정보 삭제", description = "결제 완료 화면에서 세션 저장값, 장바구니 삭제한다.")
 //    @ApiResponse(responseCode = "200", description = "주문 정보 삭제 성공")
