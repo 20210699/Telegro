@@ -94,7 +94,7 @@ public class PaymentController implements PaymentControllerDocs{
         httpSession.removeAttribute("cartIds");
     }
 
-    @PatchMapping("/payments/update")
+    @PostMapping("/payments/update")
     public void updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
 
         String paymentStatus = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse().getStatus();
