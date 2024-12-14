@@ -14,7 +14,6 @@ import com.telegro.telegro.domain.order.repository.OrderRepository;
 import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
 import com.telegro.telegro.domain.payment.dto.request.WebhookDTO;
 import com.telegro.telegro.domain.payment.service.PaymentService;
-import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import jakarta.annotation.PostConstruct;
@@ -100,7 +99,10 @@ public class PaymentController implements PaymentControllerDocs{
         String paymentStatus = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse().getStatus();
 
         if (request.getStatus().equals(paymentStatus)) {
-            Order order = orderRepository.findByOrderNumber(request.getImp_uid());
+            Order order = orderRepository.findByOrderNumber(request.getImp_uid())
+                    .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+
+            log.info("orderNum : {}", order.getOrderNumber());
 
             switch (paymentStatus) {
                 case "paid":
@@ -118,6 +120,7 @@ public class PaymentController implements PaymentControllerDocs{
                 default:
                     throw new IllegalStateException("예상치 못한 결제 상태 : " + paymentStatus);
             }
+            log.info("성공적으로 상태 변경 : {}", order.getOrderStatus().toString());
         } else {
             throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
         }

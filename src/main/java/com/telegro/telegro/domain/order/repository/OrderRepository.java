@@ -5,11 +5,10 @@ import com.telegro.telegro.domain.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -35,5 +34,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // 특정 사용자의 특정 날짜 이전의 주문 조회
     Page<Order> findByCreatedAtBeforeAndUser(LocalDateTime endDateTime, User user, Pageable pageable);
 
-    Order findByOrderNumber(String impUid);
+    Optional<Order> findByOrderNumber(String impUid);
 }
