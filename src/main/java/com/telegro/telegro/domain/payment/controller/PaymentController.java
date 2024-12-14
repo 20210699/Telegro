@@ -21,6 +21,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -93,6 +94,7 @@ public class PaymentController implements PaymentControllerDocs{
         httpSession.removeAttribute("cartIds");
     }
 
+    @Transactional
     @PostMapping("/payments/update")
     public void updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
 
@@ -120,7 +122,8 @@ public class PaymentController implements PaymentControllerDocs{
                 default:
                     throw new IllegalStateException("예상치 못한 결제 상태 : " + paymentStatus);
             }
-            log.info("성공적으로 상태 변경 : {}", order.getOrderStatus().toString());
+            Order savedOrder = orderRepository.save(order);
+            log.info("성공적으로 상태 변경 : {}", savedOrder.getOrderStatus().toString());
         } else {
             throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
         }
