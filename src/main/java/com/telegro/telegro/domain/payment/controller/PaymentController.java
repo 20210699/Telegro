@@ -165,18 +165,19 @@ public class PaymentController{
                     .orElseGet(() -> {
                         // orderId 파싱 로직
                         try {
+                            // order 찾기 로직
                             var customData = mapper.readValue(payment.getCustomData(), Map.class);
                             Long orderId = Long.valueOf(customData.get("orderId").toString());
                             log.info("Parsed orderId: {}", orderId);
+
+                            Order foundOrder = orderRepository.findById(orderId) // Todo : json 파싱
+                                    .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+                            foundOrder.setOrderNumber(imp_uid);
+                            return foundOrder;
                         } catch (JsonProcessingException e) {
                             log.error("JSON 파싱 오류 발생: {}", e.getMessage(), e);
                             throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
                         }
-                        // order 찾기 로직
-                        Order foundOrder = orderRepository.findById(Long.valueOf(payment.getCustomerUid())) // Todo : json 파싱
-                                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
-                        foundOrder.setOrderNumber(imp_uid);
-                        return foundOrder;
                     });
 
             log.info("orderNum : {}", order.getOrderNumber());
