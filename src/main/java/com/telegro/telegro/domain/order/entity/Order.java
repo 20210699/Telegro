@@ -38,10 +38,16 @@ public class Order extends BaseEntity {
     private PaymentStatus paymentStatus;
 
     @Column
+    private BigDecimal totalPrice; // 결제된 총 금액
+
+    @Column
     private BigDecimal shippingCost;
 
     @Column
-    private String reci;
+    private String receiptUrl;
+
+    @Column
+    private String cashReceiptUrl;
 
     @Column(columnDefinition = "TEXT")
     private String request;
@@ -62,5 +68,4 @@ public class Order extends BaseEntity {
         this.user = user;
         this.carts = carts;
     }
-
 }

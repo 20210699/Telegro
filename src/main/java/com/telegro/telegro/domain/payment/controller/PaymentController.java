@@ -26,9 +26,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
-@RequestMapping("")
+@RequestMapping
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentController implements PaymentControllerDocs{
@@ -69,7 +70,7 @@ public class PaymentController implements PaymentControllerDocs{
     }
 
     @Transactional
-    @PostMapping("/payments/update") // 결제 정보 검증 및 웹훅 수신
+    @PostMapping("/payments/update")
     public SuccessResponse<?> updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
 
         Payment payment = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse();
@@ -85,40 +86,46 @@ public class PaymentController implements PaymentControllerDocs{
                                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
                         foundOrder.setOrderNumber(request.getImp_uid());
+                        foundOrder.setReceiptUrl(payment.getReceiptUrl());
+                        foundOrder.setTotalPrice(payment.getAmount()); // Todo : 가상 계좌 테스트 후 로직 결정
 
                         return foundOrder;
                     } catch (JsonProcessingException e) {
-                        log.error("JSON 파싱 오류 발생: {}", e.getMessage(), e);
-                        throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
+                        log.error("JSON 파싱 오류 발생: {}", payment.getCustomData(), e);
+                        throw CustomException.of(Error.INTERNAL_SERVER_ERROR);
                     }
                 });
 
-        if (request.getStatus().equals(payment.getStatus())) {
+        if (request.getStatus() == null) {
+            order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+            order.setPaymentStatus(PaymentStatus.FAILED);
+        }
 
-            log.info("orderNum : {}", order.getOrderNumber());
-
-            switch (payment.getStatus()) {
-                case "paid":
-                    order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
-                    order.setPaymentStatus(PaymentStatus.COMPLETED);
-                    break;
-                case "ready":
-                    order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
-                    order.setPaymentStatus(PaymentStatus.PENDING);
-                    break;
-                case "cancelled":
-                    order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
-                    order.setPaymentStatus(PaymentStatus.CANCELLED);
-                    break;
-                default:
-                    throw new IllegalStateException("예상치 못한 결제 상태 : " + payment);
-            }
-
-            Order savedOrder = orderRepository.save(order);
-            log.info("성공적으로 상태 변경 : {}", savedOrder.getOrderStatus().toString());
-        } else {
+        if (!Objects.equals(request.getStatus(), payment.getStatus())) {
             throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
         }
+
+        log.info("orderNum: {}", order.getOrderNumber());
+
+        switch (payment.getStatus()) {
+            case "paid" -> {
+                order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
+                order.setPaymentStatus(PaymentStatus.COMPLETED);
+            }
+            case "ready" -> {
+                order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
+                order.setPaymentStatus(PaymentStatus.PENDING);
+            }
+            case "cancelled" -> {
+                order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+                order.setPaymentStatus(PaymentStatus.CANCELLED);
+            }
+            default -> throw new IllegalStateException("예상치 못한 결제 상태: " + payment.getStatus());
+        }
+
+        Order savedOrder = orderRepository.save(order);
+        log.info("성공적으로 상태 변경: {}", savedOrder.getOrderStatus());
+
         return SuccessResponse.of();
     }
 }
