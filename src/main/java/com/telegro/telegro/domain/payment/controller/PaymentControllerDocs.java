@@ -1,9 +1,6 @@
 package com.telegro.telegro.domain.payment.controller;
 
 import com.siot.IamportRestClient.exception.IamportResponseException;
-import com.siot.IamportRestClient.response.IamportResponse;
-import com.siot.IamportRestClient.response.Payment;
-import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
 import com.telegro.telegro.domain.payment.dto.request.WebhookDTO;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import com.telegro.telegro.global.auth.annotation.LoginInfo;
@@ -15,9 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.io.IOException;
 
 public interface PaymentControllerDocs {
-    /*@Operation(summary = "결제 정보 저장", description = "결제 정보를 저장한다.")
-    @ApiResponse(responseCode = "200", description = "결제 정보 저장 성공")
-    public IamportResponse<Payment> validateIamport(@LoginInfo Long id, @PathVariable String imp_uid, @RequestBody PaymentRequestDTO request) throws IamportResponseException, IOException;*/
 
     @Operation(summary = "결제 취소", description = "결제를 취소하고, 주문 상태를 변경한다")
     @ApiResponse(responseCode = "200", description = "결제 취소 성공")

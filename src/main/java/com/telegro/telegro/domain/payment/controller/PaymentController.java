@@ -6,6 +6,8 @@ import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.request.CancelData;
 import com.siot.IamportRestClient.response.Payment;
+import com.telegro.telegro.domain.cart.entity.Cart;
+import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
@@ -18,6 +20,7 @@ import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -32,6 +36,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentController implements PaymentControllerDocs{
+    private final HttpSession httpSession;
+    private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private IamportClient iamportClient;
@@ -68,8 +74,7 @@ public class PaymentController implements PaymentControllerDocs{
         return SuccessResponse.of();
     }
 
-    /*@GetMapping("/order/paymentconfirm")
-    public void deleteSession() {
+    private void deleteSession() {
         List<Long>cartIds = (List<Long>) httpSession.getAttribute("cartIds");
 
         for(Long cartId : cartIds){
@@ -80,7 +85,7 @@ public class PaymentController implements PaymentControllerDocs{
         }
         httpSession.removeAttribute("temporaryOrder");
         httpSession.removeAttribute("cartIds");
-    }*/ // Todo : 세션 정보 삭제 로직 어떻게 처리?
+    } // Todo : 세션 정보 삭제 로직 어떻게 처리?
 
     @Transactional
     @PostMapping("/payments/update") // 결제 정보 검증 및 웹훅 수신
