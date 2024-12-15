@@ -1,5 +1,7 @@
 package com.telegro.telegro.domain.order.controller;
 
+import com.telegro.telegro.domain.cart.entity.Cart;
+import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderDetailResponseDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
@@ -26,14 +28,14 @@ import java.util.List;
 public class OrderController implements OrderControllerDocs{
     private final OrderService orderService;
     private final HttpSession httpSession;
+    private final CartRepository cartRepository;
 
     @PostMapping("/create")
     public SuccessResponse<temporaryOrderDTO> createOrder(Long id, List<Long> cartId) {
         Order temporaryOrder = orderService.createOrder(id, cartId);
 
-        // 세션에 임시 주문 정보를 저장
         httpSession.setAttribute("temporaryOrder", temporaryOrder);
-        httpSession.setAttribute("cartId", cartId); // 장바구니 id 저장
+        httpSession.setAttribute("cartId", cartId);
         httpSession.getAttribute("cartIds");
 
         return SuccessResponse.of(orderService.getOrderInfo(id, cartId));
@@ -48,7 +50,24 @@ public class OrderController implements OrderControllerDocs{
             throw CustomException.of(Error.ORDER_NOT_FOUND);
         }
 
-        return SuccessResponse.of(orderService.orderConfirm(id, temporaryOrder, request));
+        OrderResponseDTO order = orderService.orderConfirm(id, temporaryOrder, request);
+
+        deleteSession();
+
+        return SuccessResponse.of(order);
+    }
+
+    private void deleteSession() {
+        List<Long> cartIds = (List<Long>) httpSession.getAttribute("cartIds");
+
+        for(Long cartId : cartIds){
+            Cart cart = cartRepository.findById(cartId)
+                    .orElseThrow(() -> CustomException.of(Error.CART_NOT_FOUND));
+
+            cartRepository.delete(cart);
+        }
+        httpSession.removeAttribute("temporaryOrder");
+        httpSession.removeAttribute("cartIds");
     }
 
     @GetMapping
