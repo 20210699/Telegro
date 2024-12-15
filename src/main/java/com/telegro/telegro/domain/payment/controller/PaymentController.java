@@ -155,7 +155,7 @@ public class PaymentController{
     }*/
 
     @PostMapping("api/v1/order/payment/{imp_uid}")
-    public void updatePaymentStatus(String imp_uid, PaymentRequestDTO request) throws IamportResponseException, IOException {
+    public void updatePaymentStatus(@PathVariable String imp_uid) throws IamportResponseException, IOException {
 
         Payment payment = iamportClient.paymentByImpUid(imp_uid).getResponse();
 
