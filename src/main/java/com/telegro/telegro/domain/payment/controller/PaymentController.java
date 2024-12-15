@@ -5,16 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.request.CancelData;
-import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
-import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
-import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
 import com.telegro.telegro.domain.payment.dto.request.WebhookDTO;
-import com.telegro.telegro.domain.payment.service.PaymentService;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.UserRepository;
@@ -22,7 +18,6 @@ import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,12 +32,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentController implements PaymentControllerDocs{
-    private final HttpSession httpSession;
-    private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private IamportClient iamportClient;
-    private final PaymentService paymentService;
     private final ObjectMapper mapper;
 
     @Value("${imp.api.apikey}")
@@ -55,17 +47,6 @@ public class PaymentController implements PaymentControllerDocs{
     public void init() {
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
-
-    /*@PostMapping("api/payments/{imp_uid}")
-//    @PostMapping("api/v1/order/payment/{imp_uid}")
-    public IamportResponse<Payment> validateIamport(Long id, String imp_uid, PaymentRequestDTO request) throws IamportResponseException,IOException {
-
-        IamportResponse<Payment> payment = iamportClient.paymentByImpUid(imp_uid);
-
-        paymentService.processPaymentDone(id, request, imp_uid);
-
-        return payment; // Todo  : 주문 완료 화면에 맞는 DTO 생성
-    }*/
 
     @PostMapping("api/payments/cancel/{orderId}")
     public SuccessResponse<?> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
@@ -82,7 +63,7 @@ public class PaymentController implements PaymentControllerDocs{
 
         CancelData cancelData = new CancelData(order.getOrderNumber(), true);
 
-        IamportResponse<Payment> payment = iamportClient.cancelPaymentByImpUid(cancelData);
+        iamportClient.cancelPaymentByImpUid(cancelData);
 
         return SuccessResponse.of();
     }
@@ -107,15 +88,26 @@ public class PaymentController implements PaymentControllerDocs{
 
         Payment payment = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse();
 
-        if (request.getStatus().equals(payment.getStatus())) {
-            Order order = orderRepository.findByOrderNumber(request.getImp_uid())
-                    .orElseGet(() -> {
-                        // order 찾기 로직
-                        Order foundOrder = orderRepository.findById(Long.valueOf(payment.getCustomData()))
+        Order order = orderRepository.findByOrderNumber(request.getImp_uid())
+                .orElseGet(() -> {
+                    try {
+                        var customData = mapper.readValue(payment.getCustomData(), Map.class);
+                        Long orderId = Long.valueOf(customData.get("orderId").toString());
+                        log.info("Parsed orderId: {}", orderId);
+
+                        Order foundOrder = orderRepository.findById(orderId)
                                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+
                         foundOrder.setOrderNumber(request.getImp_uid());
+
                         return foundOrder;
-                    });
+                    } catch (JsonProcessingException e) {
+                        log.error("JSON 파싱 오류 발생: {}", e.getMessage(), e);
+                        throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
+                    }
+                });
+
+        if (request.getStatus().equals(payment.getStatus())) {
 
             log.info("orderNum : {}", order.getOrderNumber());
 
