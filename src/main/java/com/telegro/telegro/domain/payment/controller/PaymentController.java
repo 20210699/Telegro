@@ -102,15 +102,17 @@ public class PaymentController implements PaymentControllerDocs{
     @PostMapping("/payments/update")
     public void updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
 
-        String paymentStatus = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse().getStatus();
+        Payment payment = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse();
 
-        if (request.getStatus().equals(paymentStatus)) {
+        if (request.getStatus().equals(payment.getStatus())) {
             Order order = orderRepository.findByOrderNumber(request.getImp_uid())
-                    .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+                    .orElseGet(() -> orderRepository.findById(Long.valueOf(payment.getCustomerUid())) // Todo : 프론트 로직 처리에 따라 수정
+                            .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND)));
 
+            order.setOrderNumber(request.getImp_uid());
             log.info("orderNum : {}", order.getOrderNumber());
 
-            switch (paymentStatus) {
+            switch (payment.getStatus()) {
                 case "paid":
                     order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
                     order.setPaymentStatus(PaymentStatus.COMPLETED);
@@ -124,7 +126,7 @@ public class PaymentController implements PaymentControllerDocs{
                     order.setPaymentStatus(PaymentStatus.CANCELLED);
                     break;
                 default:
-                    throw new IllegalStateException("예상치 못한 결제 상태 : " + paymentStatus);
+                    throw new IllegalStateException("예상치 못한 결제 상태 : " + payment);
             }
 
             Order savedOrder = orderRepository.save(order);

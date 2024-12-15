@@ -1,3 +1,4 @@
+/*
 package com.telegro.telegro.domain.payment.entity;
 
 import com.telegro.telegro.domain.order.entity.Order;
@@ -63,3 +64,4 @@ public class PaymentHistory {
         this.paidAt =  LocalDateTime.now();
     }
 }
+*/
