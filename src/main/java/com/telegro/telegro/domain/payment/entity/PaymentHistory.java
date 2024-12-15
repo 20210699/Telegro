@@ -43,14 +43,14 @@ public class PaymentHistory {
     @Column(name = "product_price", nullable = false)
     private BigDecimal price; // 가격
 
-    @Column
-    private Long totalPrice; // 결제한 총 가격
+//    @Column
+//    private Long totalPrice; // 결제한 총 가격
 
     @Column
     private LocalDateTime paidAt; // 결제시각
 
-    @Column
-    private Boolean status = true; // 상태
+//    @Column
+//    private Boolean status = true; // 상태
 
     public PaymentHistory(User user, Order order, Product product, String productName, String productOption, BigDecimal price, Long totalPrice) {
         this.user = user;
@@ -59,7 +59,7 @@ public class PaymentHistory {
         this.productName = productName;
         this.productOption = productOption;
         this.price = price;
-        this.totalPrice = totalPrice;
+//        this.totalPrice = totalPrice;
         this.paidAt =  LocalDateTime.now();
     }
 }
