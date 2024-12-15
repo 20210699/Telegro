@@ -1,5 +1,7 @@
 package com.telegro.telegro.domain.payment.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.request.CancelData;
@@ -28,19 +30,22 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("")
 @RequiredArgsConstructor
 @Slf4j
-public class PaymentController implements PaymentControllerDocs{
+//public class PaymentController implements PaymentControllerDocs{
 
+public class PaymentController{
     private final HttpSession httpSession;
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private IamportClient iamportClient;
     private final PaymentService paymentService;
+    private final ObjectMapper mapper;
 
     @Value("${imp.api.apikey}")
     private String apiKey;
@@ -53,8 +58,8 @@ public class PaymentController implements PaymentControllerDocs{
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
 
-//    @PostMapping("api/payments/{imp_uid}")
-    @PostMapping("api/v1/order/payment/{imp_uid}")
+    @PostMapping("api/payments/{imp_uid}")
+//    @PostMapping("api/v1/order/payment/{imp_uid}")
     public IamportResponse<Payment> validateIamport(Long id, String imp_uid, PaymentRequestDTO request) throws IamportResponseException,IOException {
 
         IamportResponse<Payment> payment = iamportClient.paymentByImpUid(imp_uid);
@@ -99,17 +104,79 @@ public class PaymentController implements PaymentControllerDocs{
     }*/ // Todo : 세션 정보 삭제 로직 어떻게 처리?
 
     @Transactional
-    @PostMapping("/payments/update")
+//    @PostMapping("/payments/update") // 결제 정보 검증 및 웹훅 수신
+    /*@PostMapping("api/v1/order/payment/{imp_uid}")
     public void updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
 
         Payment payment = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse();
 
         if (request.getStatus().equals(payment.getStatus())) {
             Order order = orderRepository.findByOrderNumber(request.getImp_uid())
-                    .orElseGet(() -> orderRepository.findById(Long.valueOf(payment.getCustomerUid())) // Todo : 프론트 로직 처리에 따라 수정
-                            .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND)));
+                    .orElseGet(() -> {
+                        // orderId 파싱 로직
+                        try {
+                            var customData = mapper.readValue(payment.getCustomData(), Map.class);
+                            Long orderId = Long.valueOf(customData.get("orderId").toString());
+                            log.info("Parsed orderId: {}", orderId);
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
+                        }
+                        // order 찾기 로직
+                        Order foundOrder = orderRepository.findById(Long.valueOf(payment.getCustomerUid())) // Todo : json 파싱
+                                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+                        foundOrder.setOrderNumber(request.getImp_uid());
+                        return foundOrder;
+                    });
 
-            order.setOrderNumber(request.getImp_uid());
+            log.info("orderNum : {}", order.getOrderNumber());
+
+            switch (payment.getStatus()) {
+                case "paid":
+                    order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
+                    order.setPaymentStatus(PaymentStatus.COMPLETED);
+                    break;
+                case "ready":
+                    order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
+                    order.setPaymentStatus(PaymentStatus.PENDING);
+                    break;
+                case "cancelled":
+                    order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+                    order.setPaymentStatus(PaymentStatus.CANCELLED);
+                    break;
+                default:
+                    throw new IllegalStateException("예상치 못한 결제 상태 : " + payment);
+            }
+
+            Order savedOrder = orderRepository.save(order);
+            log.info("성공적으로 상태 변경 : {}", savedOrder.getOrderStatus().toString());
+        } else {
+            throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
+        }
+    }*/
+
+    @PostMapping("api/v1/order/payment/{imp_uid}")
+    public void updatePaymentStatus(String imp_uid, PaymentRequestDTO request) throws IamportResponseException, IOException {
+
+        Payment payment = iamportClient.paymentByImpUid(imp_uid).getResponse();
+
+        if (payment.getStatus().equals("paid")) {
+            Order order = orderRepository.findByOrderNumber(imp_uid)
+                    .orElseGet(() -> {
+                        // orderId 파싱 로직
+                        try {
+                            var customData = mapper.readValue(payment.getCustomData(), Map.class);
+                            Long orderId = Long.valueOf(customData.get("orderId").toString());
+                            log.info("Parsed orderId: {}", orderId);
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
+                        }
+                        // order 찾기 로직
+                        Order foundOrder = orderRepository.findById(Long.valueOf(payment.getCustomerUid())) // Todo : json 파싱
+                                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+                        foundOrder.setOrderNumber(imp_uid);
+                        return foundOrder;
+                    });
+
             log.info("orderNum : {}", order.getOrderNumber());
 
             switch (payment.getStatus()) {

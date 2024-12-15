@@ -6,8 +6,8 @@ import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
 import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
-import com.telegro.telegro.domain.payment.entity.PaymentHistory;
-import com.telegro.telegro.domain.payment.repository.PaymentRepository;
+//import com.telegro.telegro.domain.payment.entity.PaymentHistory;
+//import com.telegro.telegro.domain.payment.repository.PaymentRepository;
 import com.telegro.telegro.domain.product.entity.Product;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.repository.UserRepository;
@@ -27,7 +27,7 @@ import java.util.List;
 public class PaymentService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
-    private final PaymentRepository paymentRepository;
+//    private final PaymentRepository paymentRepository;
     private final CartRepository cartRepository;
 
     public void processPaymentDone(Long id, PaymentRequestDTO request, String imp_uid) {
@@ -58,9 +58,9 @@ public class PaymentService {
             Product product = cart.getProduct();
             String option = cart.getInputOption() + ", " + cart.getSelectOption();
 
-            PaymentHistory paymentHistory = new PaymentHistory(user, order, product, product.getProductName(), option, cart.getPrice(), totalPrice);
+//            PaymentHistory paymentHistory = new PaymentHistory(user, order, product, product.getProductName(), option, cart.getPrice(), totalPrice);
 
-            paymentRepository.save(paymentHistory);
+//            paymentRepository.save(paymentHistory);
         }
     }
 }
