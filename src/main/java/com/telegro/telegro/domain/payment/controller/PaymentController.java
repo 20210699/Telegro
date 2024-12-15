@@ -1,44 +1,41 @@
 package com.telegro.telegro.domain.payment.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.request.CancelData;
-import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
-import com.telegro.telegro.domain.cart.entity.Cart;
-import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
-import com.telegro.telegro.domain.payment.dto.request.PaymentRequestDTO;
 import com.telegro.telegro.domain.payment.dto.request.WebhookDTO;
-import com.telegro.telegro.domain.payment.service.PaymentService;
 import com.telegro.telegro.domain.user.entity.User;
+import com.telegro.telegro.domain.user.entity.enums.Role;
+import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
+import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("")
 @RequiredArgsConstructor
 @Slf4j
-//Todo : url 통일성 있게 수정
 public class PaymentController implements PaymentControllerDocs{
-
-    private final HttpSession httpSession;
-    private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
     private IamportClient iamportClient;
-    private final PaymentService paymentService;
+    private final ObjectMapper mapper;
 
     @Value("${imp.api.apikey}")
     private String apiKey;
@@ -51,36 +48,27 @@ public class PaymentController implements PaymentControllerDocs{
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
 
-    @PostMapping("api/v1/order/payment/{imp_uid}")
-    public IamportResponse<Payment> validateIamport(Long id, String imp_uid, PaymentRequestDTO request) throws IamportResponseException,IOException {
-
-        IamportResponse<Payment> payment = iamportClient.paymentByImpUid(imp_uid);
-
-        log.info("결제 요청 응답. 결제 내역 - 주문 번호: {}", payment.getResponse().getMerchantUid());
-
-        paymentService.processPaymentDone(id, request, imp_uid);
-
-        return payment;
-    }
-
-    @PostMapping("api/v1/{orderId}")
-    public IamportResponse<Payment> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
+    @PostMapping("api/payments/cancel/{orderId}")
+    public SuccessResponse<?> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
-        // Todo : 관리자 혹은 주문자만 결제 취소 가능
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
+
+        if(!(user.getRole().equals(Role.ADMIN) || user.equals(order.getUser()))) {
+            throw CustomException.of(Error.BAD_REQUEST_ERROR);
+        }
 
         CancelData cancelData = new CancelData(order.getOrderNumber(), true);
 
-        IamportResponse<Payment> payment = iamportClient.cancelPaymentByImpUid(cancelData);
+        iamportClient.cancelPaymentByImpUid(cancelData);
 
-        // Todo : 결제 취소 시 주문, 결제 상태 변경(웹훅으로 상태 관리)
-
-        return payment;
+        return SuccessResponse.of();
     }
 
-    @GetMapping("/order/paymentconfirm")
+    /*@GetMapping("/order/paymentconfirm")
     public void deleteSession() {
         List<Long>cartIds = (List<Long>) httpSession.getAttribute("cartIds");
 
@@ -92,17 +80,38 @@ public class PaymentController implements PaymentControllerDocs{
         }
         httpSession.removeAttribute("temporaryOrder");
         httpSession.removeAttribute("cartIds");
-    }
+    }*/ // Todo : 세션 정보 삭제 로직 어떻게 처리?
 
-    @PostMapping("/payments/update")
-    public void updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
+    @Transactional
+    @PostMapping("/payments/update") // 결제 정보 검증 및 웹훅 수신
+    public SuccessResponse<?> updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
 
-        String paymentStatus = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse().getStatus();
+        Payment payment = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse();
 
-        if (request.getStatus().equals(paymentStatus)) {
-            Order order = orderRepository.findByOrderNumber(request.getImp_uid());
+        Order order = orderRepository.findByOrderNumber(request.getImp_uid())
+                .orElseGet(() -> {
+                    try {
+                        var customData = mapper.readValue(payment.getCustomData(), Map.class);
+                        Long orderId = Long.valueOf(customData.get("orderId").toString());
+                        log.info("Parsed orderId: {}", orderId);
 
-            switch (paymentStatus) {
+                        Order foundOrder = orderRepository.findById(orderId)
+                                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+
+                        foundOrder.setOrderNumber(request.getImp_uid());
+
+                        return foundOrder;
+                    } catch (JsonProcessingException e) {
+                        log.error("JSON 파싱 오류 발생: {}", e.getMessage(), e);
+                        throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
+                    }
+                });
+
+        if (request.getStatus().equals(payment.getStatus())) {
+
+            log.info("orderNum : {}", order.getOrderNumber());
+
+            switch (payment.getStatus()) {
                 case "paid":
                     order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
                     order.setPaymentStatus(PaymentStatus.COMPLETED);
@@ -116,10 +125,14 @@ public class PaymentController implements PaymentControllerDocs{
                     order.setPaymentStatus(PaymentStatus.CANCELLED);
                     break;
                 default:
-                    throw new IllegalStateException("예상치 못한 결제 상태 : " + paymentStatus);
+                    throw new IllegalStateException("예상치 못한 결제 상태 : " + payment);
             }
+
+            Order savedOrder = orderRepository.save(order);
+            log.info("성공적으로 상태 변경 : {}", savedOrder.getOrderStatus().toString());
         } else {
             throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
         }
+        return SuccessResponse.of();
     }
 }

@@ -89,6 +89,7 @@ public class OrderService {
             totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
         }
 
+
         BigDecimal points = totalPrice.multiply(new BigDecimal("0.01")).setScale(0, RoundingMode.HALF_UP);
 
         return temporaryOrderDTO.builder()
@@ -108,7 +109,7 @@ public class OrderService {
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
         if(!user.getId().equals(temporaryOrder.getUser().getId())) {
-            log.error("User is not the same");
+            log.error("User is not the same"); // Todo : 로그 정리 (나중에 한꺼번에)
             throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
 
@@ -129,9 +130,9 @@ public class OrderService {
                 .orElseGet(() -> deliveryAddressRepository.save(deliveryAddress));
 
         Order order = Order.builder()
-                .orderStatus(OrderStatus.ORDER_COMPLETED)
+                .orderStatus(OrderStatus.ORDER_CREATED)
                 .paymentMethod(request.paymentMethod())
-                .paymentStatus(PaymentStatus.PENDING)
+                .paymentStatus(PaymentStatus.FAILED)
                 .shippingCost(request.shoppingCost())
                 .request(request.request())
                 .carts(temporaryOrder.getCarts())
@@ -141,12 +142,14 @@ public class OrderService {
 
         BigDecimal totalPrice = BigDecimal.ZERO;
 
+        // Todo : 결제가 완료되면 장바구니 상태 처리
         for (Cart cart : temporaryOrder.getCarts()) {
             totalPrice = totalPrice.add(cart.getTotalPrice());
             cart.setCartStatus(CartStatus.ORDERED);
             cartRepository.save(cart);
         }
 
+        // Todo : 결제가 완료되면 point 계산
         user.setTotalPrice(totalPrice.add(user.getTotalPrice()));
         user.setPoint(user.getPoint()
                 .subtract(request.pointsToUse())
@@ -172,7 +175,6 @@ public class OrderService {
                 .totalPrice(totalPrice)
                 .build();
     }
-
 
     // 주문한 상품 목록
     @Transactional(readOnly = true)
@@ -242,6 +244,7 @@ public class OrderService {
         }
     }
 
+    @Transactional
     public void updateOrderStatus(Long id, Long orderId, OrderStatus status) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
@@ -257,6 +260,7 @@ public class OrderService {
         orderRepository.save(order);
     }
 
+    // Todo : 코드에서 냄새남;; 근데 쩔 수 없음.. 영수증 정보 불러와야해서.. -> 개선 방향 고민
     @Value("${imp.api.apikey}")
     private String apiKey;
 

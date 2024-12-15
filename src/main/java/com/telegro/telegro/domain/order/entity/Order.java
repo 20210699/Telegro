@@ -40,6 +40,9 @@ public class Order extends BaseEntity {
     @Column
     private BigDecimal shippingCost;
 
+    @Column
+    private String reci;
+
     @Column(columnDefinition = "TEXT")
     private String request;
 
