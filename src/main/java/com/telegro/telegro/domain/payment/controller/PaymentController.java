@@ -158,6 +158,7 @@ public class PaymentController{
     public void updatePaymentStatus(@PathVariable String imp_uid) throws IamportResponseException, IOException {
 
         Payment payment = iamportClient.paymentByImpUid(imp_uid).getResponse();
+        log.info(payment.getCustomData());
 
         if (payment.getStatus().equals("paid")) {
             Order order = orderRepository.findByOrderNumber(imp_uid)
@@ -168,6 +169,7 @@ public class PaymentController{
                             Long orderId = Long.valueOf(customData.get("orderId").toString());
                             log.info("Parsed orderId: {}", orderId);
                         } catch (JsonProcessingException e) {
+                            log.error("JSON 파싱 오류 발생: {}", e.getMessage(), e);
                             throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
                         }
                         // order 찾기 로직
