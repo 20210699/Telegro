@@ -99,28 +99,27 @@ public class PaymentController implements PaymentControllerDocs{
         if (request.getStatus() == null) {
             order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
             order.setPaymentStatus(PaymentStatus.FAILED);
-        }
+        } else if (Objects.equals(request.getStatus(), payment.getStatus())) {
 
-        if (!Objects.equals(request.getStatus(), payment.getStatus())) {
+            log.info("orderNum: {}", order.getOrderNumber());
+
+            switch (payment.getStatus()) {
+                case "paid" -> {
+                    order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
+                    order.setPaymentStatus(PaymentStatus.COMPLETED);
+                }
+                case "ready" -> {
+                    order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
+                    order.setPaymentStatus(PaymentStatus.PENDING);
+                }
+                case "cancelled" -> {
+                    order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+                    order.setPaymentStatus(PaymentStatus.CANCELLED);
+                }
+                default -> throw new IllegalStateException("예상치 못한 결제 상태: " + payment.getStatus());
+            }
+
             throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
-        }
-
-        log.info("orderNum: {}", order.getOrderNumber());
-
-        switch (payment.getStatus()) {
-            case "paid" -> {
-                order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
-                order.setPaymentStatus(PaymentStatus.COMPLETED);
-            }
-            case "ready" -> {
-                order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
-                order.setPaymentStatus(PaymentStatus.PENDING);
-            }
-            case "cancelled" -> {
-                order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
-                order.setPaymentStatus(PaymentStatus.CANCELLED);
-            }
-            default -> throw new IllegalStateException("예상치 못한 결제 상태: " + payment.getStatus());
         }
 
         Order savedOrder = orderRepository.save(order);

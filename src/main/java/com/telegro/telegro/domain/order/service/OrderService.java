@@ -66,6 +66,7 @@ public class OrderService {
         return new Order(user, carts);
     }
 
+    @Transactional
     public temporaryOrderDTO getOrderInfo(Long id, List<Long> cartId) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
@@ -80,7 +81,6 @@ public class OrderService {
         for (Cart cart : carts) {
             totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
         }
-
 
         BigDecimal points = totalPrice.multiply(new BigDecimal("0.01")).setScale(0, RoundingMode.HALF_UP);
 
