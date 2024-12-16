@@ -51,8 +51,10 @@ public class OrderController implements OrderControllerDocs{
         }
 
         OrderResponseDTO order = orderService.orderConfirm(id, temporaryOrder, request);
+        log.info("orderConfirm, Cart IDs: {}", temporaryOrder.getCarts().stream().map(Cart::getId).toList());
 
         deleteSession();
+        log.info("deleteSession, Cart IDs: {}", temporaryOrder.getCarts().stream().map(Cart::getId).toList());
 
         return SuccessResponse.of(order);
     }
