@@ -28,7 +28,6 @@ import java.util.List;
 public class OrderController implements OrderControllerDocs{
     private final OrderService orderService;
     private final HttpSession httpSession;
-    private final CartRepository cartRepository;
 
     @PostMapping("/create")
     public SuccessResponse<temporaryOrderDTO> createOrder(Long id, List<Long> cartId) {
@@ -36,7 +35,6 @@ public class OrderController implements OrderControllerDocs{
 
         httpSession.setAttribute("temporaryOrder", temporaryOrder);
         httpSession.setAttribute("cartId", cartId);
-        httpSession.getAttribute("cartIds");
 
         return SuccessResponse.of(orderService.getOrderInfo(id, cartId));
     }
@@ -53,23 +51,10 @@ public class OrderController implements OrderControllerDocs{
         OrderResponseDTO order = orderService.orderConfirm(id, temporaryOrder, request);
         log.info("orderConfirm, Cart IDs: {}", temporaryOrder.getCarts().stream().map(Cart::getId).toList());
 
-        deleteSession();
-        log.info("deleteSession, Cart IDs: {}", temporaryOrder.getCarts().stream().map(Cart::getId).toList());
+        httpSession.removeAttribute("temporaryOrder");
+        httpSession.removeAttribute("cartId");
 
         return SuccessResponse.of(order);
-    }
-
-    private void deleteSession() {
-        List<Long> cartIds = (List<Long>) httpSession.getAttribute("cartIds");
-
-        for(Long cartId : cartIds){
-            Cart cart = cartRepository.findById(cartId)
-                    .orElseThrow(() -> CustomException.of(Error.CART_NOT_FOUND));
-
-            cartRepository.delete(cart);
-        }
-        httpSession.removeAttribute("temporaryOrder");
-        httpSession.removeAttribute("cartIds");
     }
 
     @GetMapping
