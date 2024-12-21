@@ -139,7 +139,7 @@ public class PaymentController implements PaymentControllerDocs{
                 }
                 default -> throw new IllegalStateException("예상치 못한 결제 상태: " + payment.getStatus());
             }
-
+        } else {
             throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
         }
 
