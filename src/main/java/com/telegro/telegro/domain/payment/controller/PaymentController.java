@@ -94,6 +94,10 @@ public class PaymentController implements PaymentControllerDocs{
                         foundOrder.setReceiptUrl(payment.getReceiptUrl());
                         foundOrder.setTotalPrice(payment.getAmount()); // Todo : 가상 계좌 테스트 후 로직 결정
 
+                        for (Cart cart : foundOrder.getCarts()) {
+                            cart.setCartStatus(CartStatus.ORDERED);
+                        }
+
                         return foundOrder;
                     } catch (JsonProcessingException e) {
                         log.error("JSON 파싱 오류 발생: {}", payment.getCustomData(), e);
@@ -107,6 +111,8 @@ public class PaymentController implements PaymentControllerDocs{
         } else if (Objects.equals(request.getStatus(), payment.getStatus())) {
 
             log.info("orderNum: {}", order.getOrderNumber());
+            log.info("웹훅 결제 상태 : {}", request.getStatus());
+            log.info("결제 상태 : {}", payment.getStatus());
 
             switch (payment.getStatus()) {
                 case "paid" -> {
@@ -117,10 +123,6 @@ public class PaymentController implements PaymentControllerDocs{
                     order.getUser().setPoint(order.getUser().getPoint()
                             .subtract(order.getPointsToUse())
                             .add(order.getPointsToEarn()));
-
-                    for (Cart cart : order.getCarts()) {
-                        cart.setCartStatus(CartStatus.ORDERED);
-                    }
                 }
                 case "ready" -> {
                     order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
