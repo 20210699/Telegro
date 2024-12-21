@@ -105,7 +105,7 @@ public class PaymentController implements PaymentControllerDocs{
                     }
                 });
 
-        if (request.getStatus() == null) {
+        if (request.getStatus() == null || request.getStatus().equals("null")) {
             order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
             order.setPaymentStatus(PaymentStatus.FAILED);
 
