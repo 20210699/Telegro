@@ -108,12 +108,11 @@ public class PaymentController implements PaymentControllerDocs{
         if (request.getStatus() == null) {
             order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
             order.setPaymentStatus(PaymentStatus.FAILED);
-        } else if (Objects.equals(request.getStatus(), payment.getStatus())) {
 
-            log.info("orderNum: {}", order.getOrderNumber());
-            log.info("웹훅 결제 상태 : {}", request.getStatus());
-            log.info("결제 상태 : {}", payment.getStatus());
+            return SuccessResponse.of();
+        }
 
+        if (Objects.equals(request.getStatus(), payment.getStatus())) {
             switch (payment.getStatus()) {
                 case "paid" -> {
                     order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
@@ -127,6 +126,11 @@ public class PaymentController implements PaymentControllerDocs{
                 case "ready" -> {
                     order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
                     order.setPaymentStatus(PaymentStatus.PENDING);
+
+                    order.getUser().setTotalPrice(order.getTotalPrice().add(order.getUser().getTotalPrice()));
+                    order.getUser().setPoint(order.getUser().getPoint()
+                            .subtract(order.getPointsToUse())
+                            .add(order.getPointsToEarn()));
                 }
                 case "cancelled" -> {
                     order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
@@ -143,8 +147,7 @@ public class PaymentController implements PaymentControllerDocs{
             throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
         }
 
-        Order savedOrder = orderRepository.save(order);
-        log.info("성공적으로 상태 변경: {}", savedOrder.getOrderStatus());
+        orderRepository.save(order);
 
         return SuccessResponse.of();
     }
