@@ -38,6 +38,12 @@ public class Order extends BaseEntity {
     private PaymentStatus paymentStatus;
 
     @Column
+    private BigDecimal pointsToUse; // 사용할 적립금
+
+    @Column
+    private BigDecimal pointsToEarn; // 적립될 적립금
+
+    @Column
     private BigDecimal totalPrice; // 결제된 총 금액
 
     @Column

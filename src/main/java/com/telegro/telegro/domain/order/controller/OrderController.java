@@ -1,7 +1,6 @@
 package com.telegro.telegro.domain.order.controller;
 
 import com.telegro.telegro.domain.cart.entity.Cart;
-import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderDetailResponseDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderListDTO;

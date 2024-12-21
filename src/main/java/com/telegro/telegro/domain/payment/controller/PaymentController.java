@@ -6,6 +6,8 @@ import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.request.CancelData;
 import com.siot.IamportRestClient.response.Payment;
+import com.telegro.telegro.domain.cart.entity.Cart;
+import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Objects;
 
@@ -48,6 +51,8 @@ public class PaymentController implements PaymentControllerDocs{
     public void init() {
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
+
+    // Todo : 결제 검증 엔드포인트 다시 만들기..
 
     @PostMapping("api/payments/cancel/{orderId}")
     public SuccessResponse<?> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
@@ -107,6 +112,15 @@ public class PaymentController implements PaymentControllerDocs{
                 case "paid" -> {
                     order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
                     order.setPaymentStatus(PaymentStatus.COMPLETED);
+
+                    order.getUser().setTotalPrice(order.getTotalPrice().add(order.getUser().getTotalPrice()));
+                    order.getUser().setPoint(order.getUser().getPoint()
+                            .subtract(order.getPointsToUse())
+                            .add(order.getPointsToEarn()));
+
+                    for (Cart cart : order.getCarts()) {
+                        cart.setCartStatus(CartStatus.ORDERED);
+                    }
                 }
                 case "ready" -> {
                     order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
@@ -115,6 +129,11 @@ public class PaymentController implements PaymentControllerDocs{
                 case "cancelled" -> {
                     order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
                     order.setPaymentStatus(PaymentStatus.CANCELLED);
+
+                    order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getTotalPrice()));
+                    order.getUser().setPoint(order.getUser().getPoint()
+                            .subtract(order.getPointsToEarn())
+                            .add(order.getPointsToUse()));
                 }
                 default -> throw new IllegalStateException("예상치 못한 결제 상태: " + payment.getStatus());
             }

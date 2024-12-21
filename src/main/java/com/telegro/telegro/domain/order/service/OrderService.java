@@ -124,29 +124,14 @@ public class OrderService {
                 .orderStatus(OrderStatus.ORDER_CREATED)
                 .paymentMethod(request.paymentMethod())
                 .paymentStatus(PaymentStatus.FAILED)
+                .pointsToUse(request.pointsToUse())
+                .pointsToEarn(request.pointsToEarn())
                 .shippingCost(request.shoppingCost())
                 .request(request.request())
                 .carts(temporaryOrder.getCarts())
                 .user(temporaryOrder.getUser())
                 .deliveryAddress(savedAddress)
                 .build();
-
-        BigDecimal totalPrice = BigDecimal.ZERO;
-
-        // Todo : 결제가 완료되면 장바구니 상태 처리
-        for (Cart cart : temporaryOrder.getCarts()) {
-            totalPrice = totalPrice.add(cart.getTotalPrice());
-            cart.setCartStatus(CartStatus.ORDERED);
-            cartRepository.save(cart);
-        }
-
-        // Todo : 결제가 완료되면 point 계산
-        user.setTotalPrice(totalPrice.add(user.getTotalPrice()));
-        user.setPoint(user.getPoint()
-                .subtract(request.pointsToUse())
-                .add(request.pointsToEarn()));
-
-        userRepository.save(user);
 
         List<CartResponseDTO> products = temporaryOrder.getCarts().stream()
                 .map(CartResponseDTO::of).toList();
@@ -163,7 +148,6 @@ public class OrderService {
                 .paymentMethod(savedOrder.getPaymentMethod())
                 .usedPoint(request.pointsToUse())
                 .shippingCost(savedOrder.getShippingCost())
-                .totalPrice(totalPrice)
                 .build();
     }
 
