@@ -109,6 +109,8 @@ public class PaymentController implements PaymentControllerDocs{
             order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
             order.setPaymentStatus(PaymentStatus.FAILED);
 
+            orderRepository.save(order);
+
             return SuccessResponse.of();
         }
 
