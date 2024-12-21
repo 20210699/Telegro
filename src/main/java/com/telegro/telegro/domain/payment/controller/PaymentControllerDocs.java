@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.io.IOException;
 
 public interface PaymentControllerDocs {
+    @Operation(summary = "결제 검증", description = "결제 검증 후 결제 확정을 한다.")
+    @ApiResponse(responseCode = "200", description = "결제 확정 성공")
+    public SuccessResponse<?> validatePayment(@PathVariable String imp_uid) throws IamportResponseException, IOException;
+
 
     @Operation(summary = "결제 취소", description = "결제를 취소하고, 주문 상태를 변경한다")
     @ApiResponse(responseCode = "200", description = "결제 취소 성공")

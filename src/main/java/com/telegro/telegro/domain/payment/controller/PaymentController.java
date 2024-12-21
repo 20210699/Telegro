@@ -27,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Objects;
 
@@ -52,7 +51,35 @@ public class PaymentController implements PaymentControllerDocs{
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
 
-    // Todo : 결제 검증 엔드포인트 다시 만들기..
+    @Transactional
+    @PostMapping("api/payments/{imp_uid}")
+    public SuccessResponse<?> validatePayment(String imp_uid) throws IamportResponseException, IOException {
+        Payment payment = iamportClient.paymentByImpUid(imp_uid).getResponse();
+
+        try {
+            var customData = mapper.readValue(payment.getCustomData(), Map.class);
+            Long orderId = Long.valueOf(customData.get("orderId").toString());
+
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+
+            order.setOrderNumber(imp_uid);
+            order.setReceiptUrl(payment.getReceiptUrl());
+            order.setTotalPrice(payment.getAmount());
+
+            for (Cart cart : order.getCarts()) {
+                cart.setCartStatus(CartStatus.ORDERED);
+            }
+
+            // Todo : 가상 계좌 주문 내역과 실제 지불된 금액 비교
+
+        } catch (JsonProcessingException e) {
+            log.error("JSON 파싱 오류 발생: {}", payment.getCustomData(), e);
+            throw CustomException.of(Error.INTERNAL_SERVER_ERROR);
+        }
+
+        return SuccessResponse.of();
+    }
 
     @PostMapping("api/payments/cancel/{orderId}")
     public SuccessResponse<?> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
@@ -67,9 +94,7 @@ public class PaymentController implements PaymentControllerDocs{
             throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
 
-        CancelData cancelData = new CancelData(order.getOrderNumber(), true);
-
-        iamportClient.cancelPaymentByImpUid(cancelData);
+        iamportClient.cancelPaymentByImpUid(new CancelData(order.getOrderNumber(), true));
 
         return SuccessResponse.of();
     }
@@ -81,35 +106,11 @@ public class PaymentController implements PaymentControllerDocs{
         Payment payment = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse();
 
         Order order = orderRepository.findByOrderNumber(request.getImp_uid())
-                .orElseGet(() -> {
-                    try {
-                        var customData = mapper.readValue(payment.getCustomData(), Map.class);
-                        Long orderId = Long.valueOf(customData.get("orderId").toString());
-                        log.info("Parsed orderId: {}", orderId);
-
-                        Order foundOrder = orderRepository.findById(orderId)
-                                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
-
-                        foundOrder.setOrderNumber(request.getImp_uid());
-                        foundOrder.setReceiptUrl(payment.getReceiptUrl());
-                        foundOrder.setTotalPrice(payment.getAmount()); // Todo : 가상 계좌 테스트 후 로직 결정
-
-                        for (Cart cart : foundOrder.getCarts()) {
-                            cart.setCartStatus(CartStatus.ORDERED);
-                        }
-
-                        return foundOrder;
-                    } catch (JsonProcessingException e) {
-                        log.error("JSON 파싱 오류 발생: {}", payment.getCustomData(), e);
-                        throw CustomException.of(Error.INTERNAL_SERVER_ERROR);
-                    }
-                });
+                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
         if (request.getStatus() == null || request.getStatus().equals("null")) {
             order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
             order.setPaymentStatus(PaymentStatus.FAILED);
-
-            orderRepository.save(order);
 
             return SuccessResponse.of();
         }
@@ -148,8 +149,6 @@ public class PaymentController implements PaymentControllerDocs{
         } else {
             throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
         }
-
-        orderRepository.save(order);
 
         return SuccessResponse.of();
     }
