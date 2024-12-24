@@ -22,6 +22,9 @@ public class PaymentService {
 
         for (Order order : pendingPayments) {
             order.setPaymentStatus(PaymentStatus.FAILED);
+            order.getUser().setPoint(order.getUser().getPoint()
+                    .subtract(order.getPointsToEarn())
+                    .add(order.getPointsToUse()));
         }
 
         orderRepository.saveAll(pendingPayments);

@@ -137,7 +137,6 @@ public class PaymentController implements PaymentControllerDocs{
                     order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
                     order.setPaymentStatus(PaymentStatus.PENDING);
 
-                    order.getUser().setTotalPrice(order.getAmount().add(order.getUser().getTotalPrice()));
                     order.getUser().setPoint(order.getUser().getPoint()
                             .subtract(order.getPointsToUse())
                             .add(order.getPointsToEarn()));
