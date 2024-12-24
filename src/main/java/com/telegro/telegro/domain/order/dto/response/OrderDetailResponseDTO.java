@@ -3,7 +3,7 @@ package com.telegro.telegro.domain.order.dto.response;
 import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
-import com.telegro.telegro.domain.payment.dto.response.PaymentDTO;
+import com.telegro.telegro.domain.order.entity.enums.PaymentMethod;
 import com.telegro.telegro.domain.user.dto.response.DeliveryAddressDetailDTO;
 import com.telegro.telegro.domain.user.dto.response.UserOrderDetailDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -40,20 +40,30 @@ public record OrderDetailResponseDTO(
         @Schema(description = "실제로 결제한 금액")
         BigDecimal totalPrice,
         @Schema(description = "결제 수단")
-        PaymentDTO paymentMethod
+        PaymentMethod paymentMethod,
+        @Schema(description = "매출전표 URL")
+        String receipt_url,
+        @Schema(description = "현금 영수증 URL")
+        String cash_receipt_url
 ) {
-        public static OrderDetailResponseDTO of(Order order, BigDecimal totalPrice, PaymentDTO payment) {
+        public static OrderDetailResponseDTO of(Order order) {
                 List<CartProductDTO> products = order.getCarts().stream().map(CartProductDTO::of).toList();
+
                 UserOrderDetailDTO user = UserOrderDetailDTO.of(order.getUser());
+
                 DeliveryAddressDetailDTO deliveryAddress = DeliveryAddressDetailDTO.of(order.getDeliveryAddress(), false);
+
                 BigDecimal price = products.stream()
                         .map(CartProductDTO::totalPrice)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
-                BigDecimal discountPrice = price.subtract(totalPrice).add(order.getShippingCost());
+
+                BigDecimal discountPrice = price.subtract(order.getTotalPrice())
+                                                .add(order.getShippingCost());
+
                 return OrderDetailResponseDTO.builder()
                         .orderId(order.getId())
                         .orderDate(order.getCreatedAt())
-                        .imp_uid(order.getOrderNumber()) // Todo : imp_ 값을 뺄까 말까
+                        .imp_uid(order.getOrderNumber())
                         .orderStatus(order.getOrderStatus())
                         .request(order.getRequest())
                         .products(products)
@@ -62,8 +72,10 @@ public record OrderDetailResponseDTO(
                         .price(price)
                         .discountPrice(discountPrice)
                         .shippingCost(order.getShippingCost())
-                        .totalPrice(totalPrice)
-                        .paymentMethod(payment)
+                        .totalPrice(order.getTotalPrice())
+                        .paymentMethod(order.getPaymentMethod())
+                        .receipt_url(order.getReceiptUrl())
+                        .cash_receipt_url(order.getCashReceiptUrl())
                         .build();
         }
 }

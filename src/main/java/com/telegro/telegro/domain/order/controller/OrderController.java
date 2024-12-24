@@ -1,5 +1,6 @@
 package com.telegro.telegro.domain.order.controller;
 
+import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderDetailResponseDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
@@ -31,10 +32,8 @@ public class OrderController implements OrderControllerDocs{
     public SuccessResponse<temporaryOrderDTO> createOrder(Long id, List<Long> cartId) {
         Order temporaryOrder = orderService.createOrder(id, cartId);
 
-        // 세션에 임시 주문 정보를 저장
         httpSession.setAttribute("temporaryOrder", temporaryOrder);
-        httpSession.setAttribute("cartId", cartId); // 장바구니 id 저장
-        httpSession.getAttribute("cartIds");
+        httpSession.setAttribute("cartId", cartId);
 
         return SuccessResponse.of(orderService.getOrderInfo(id, cartId));
     }
@@ -48,7 +47,13 @@ public class OrderController implements OrderControllerDocs{
             throw CustomException.of(Error.ORDER_NOT_FOUND);
         }
 
-        return SuccessResponse.of(orderService.orderConfirm(id, temporaryOrder, request));
+        OrderResponseDTO order = orderService.orderConfirm(id, temporaryOrder, request);
+        log.info("orderConfirm, Cart IDs: {}", temporaryOrder.getCarts().stream().map(Cart::getId).toList());
+
+        httpSession.removeAttribute("temporaryOrder");
+        httpSession.removeAttribute("cartId");
+
+        return SuccessResponse.of(order);
     }
 
     @GetMapping

@@ -6,6 +6,8 @@ import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.request.CancelData;
 import com.siot.IamportRestClient.response.Payment;
+import com.telegro.telegro.domain.cart.entity.Cart;
+import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
@@ -26,9 +28,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
-@RequestMapping("")
+@RequestMapping
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentController implements PaymentControllerDocs{
@@ -48,7 +51,44 @@ public class PaymentController implements PaymentControllerDocs{
         this.iamportClient = new IamportClient(apiKey, secretKey);
     }
 
-    @PostMapping("api/payments/cancel/{orderId}")
+    @Transactional
+    @PostMapping("/api/payments/{imp_uid}")
+    public SuccessResponse<?> validatePayment(String imp_uid) throws IamportResponseException, IOException {
+        Payment payment = iamportClient.paymentByImpUid(imp_uid).getResponse();
+
+        try {
+            var customData = mapper.readValue(payment.getCustomData(), Map.class);
+            Long orderId = Long.valueOf(customData.get("orderId").toString());
+
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+
+            order.setOrderNumber(imp_uid);
+            order.setReceiptUrl(payment.getReceiptUrl());
+
+            for (Cart cart : order.getCarts()) {
+                cart.setCartStatus(CartStatus.ORDERED);
+            }
+
+            if(order.getAmount().compareTo(payment.getAmount()) == 0){
+                switch (payment.getStatus()) {
+                    case "ready" -> {return SuccessResponse.of("가상 계좌 발급 완료");}
+
+                    case "paid" -> {return SuccessResponse.of("결제 완료");}
+
+                    default -> throw CustomException.of(Error.PAYMENT_STATUS_ERROR);
+                }
+            } else {
+                throw CustomException.of(Error.PAYMENT_AMOUNT_MISMATCH);
+            }
+
+        } catch (JsonProcessingException e) {
+            log.error("JSON 파싱 오류 발생: {}", payment.getCustomData(), e);
+            throw CustomException.of(Error.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/api/payments/cancel/{orderId}")
     public SuccessResponse<?> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
 
         Order order = orderRepository.findById(orderId)
@@ -61,78 +101,61 @@ public class PaymentController implements PaymentControllerDocs{
             throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
 
-        CancelData cancelData = new CancelData(order.getOrderNumber(), true);
-
-        iamportClient.cancelPaymentByImpUid(cancelData);
+        iamportClient.cancelPaymentByImpUid(new CancelData(order.getOrderNumber(), true));
 
         return SuccessResponse.of();
     }
 
-    /*@GetMapping("/order/paymentconfirm")
-    public void deleteSession() {
-        List<Long>cartIds = (List<Long>) httpSession.getAttribute("cartIds");
-
-        for(Long cartId : cartIds){
-            Cart cart = cartRepository.findById(cartId)
-                    .orElseThrow(() -> CustomException.of(Error.CART_NOT_FOUND));
-
-            cartRepository.delete(cart);
-        }
-        httpSession.removeAttribute("temporaryOrder");
-        httpSession.removeAttribute("cartIds");
-    }*/ // Todo : 세션 정보 삭제 로직 어떻게 처리?
-
     @Transactional
-    @PostMapping("/payments/update") // 결제 정보 검증 및 웹훅 수신
+    @PostMapping("/payments/update")
     public SuccessResponse<?> updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
 
         Payment payment = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse();
 
         Order order = orderRepository.findByOrderNumber(request.getImp_uid())
-                .orElseGet(() -> {
-                    try {
-                        var customData = mapper.readValue(payment.getCustomData(), Map.class);
-                        Long orderId = Long.valueOf(customData.get("orderId").toString());
-                        log.info("Parsed orderId: {}", orderId);
+                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
-                        Order foundOrder = orderRepository.findById(orderId)
-                                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+        if (request.getStatus() == null || request.getStatus().equals("null")) {
+            order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+            order.setPaymentStatus(PaymentStatus.FAILED);
 
-                        foundOrder.setOrderNumber(request.getImp_uid());
+            return SuccessResponse.of();
+        }
 
-                        return foundOrder;
-                    } catch (JsonProcessingException e) {
-                        log.error("JSON 파싱 오류 발생: {}", e.getMessage(), e);
-                        throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
-                    }
-                });
-
-        if (request.getStatus().equals(payment.getStatus())) {
-
-            log.info("orderNum : {}", order.getOrderNumber());
-
+        if (Objects.equals(request.getStatus(), payment.getStatus())) {
             switch (payment.getStatus()) {
-                case "paid":
+                case "paid" -> {
                     order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
                     order.setPaymentStatus(PaymentStatus.COMPLETED);
-                    break;
-                case "ready":
+
+                    order.getUser().setTotalPrice(order.getAmount().add(order.getUser().getTotalPrice()));
+                    order.getUser().setPoint(order.getUser().getPoint()
+                            .subtract(order.getPointsToUse())
+                            .add(order.getPointsToEarn()));
+                }
+                case "ready" -> {
                     order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
                     order.setPaymentStatus(PaymentStatus.PENDING);
-                    break;
-                case "cancelled":
+
+                    order.getUser().setPoint(order.getUser().getPoint()
+                            .subtract(order.getPointsToUse())
+                            .add(order.getPointsToEarn()));
+                }
+                case "cancelled" -> {
                     order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
                     order.setPaymentStatus(PaymentStatus.CANCELLED);
-                    break;
-                default:
-                    throw new IllegalStateException("예상치 못한 결제 상태 : " + payment);
-            }
 
-            Order savedOrder = orderRepository.save(order);
-            log.info("성공적으로 상태 변경 : {}", savedOrder.getOrderStatus().toString());
+                    order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
+                    order.getUser().setPoint(order.getUser().getPoint()
+                            .subtract(order.getPointsToEarn())
+                            .add(order.getPointsToUse()));
+                }
+                default -> throw new IllegalStateException("예상치 못한 결제 상태: " + payment.getStatus());
+            }
         } else {
             throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
         }
+
         return SuccessResponse.of();
     }
 }
