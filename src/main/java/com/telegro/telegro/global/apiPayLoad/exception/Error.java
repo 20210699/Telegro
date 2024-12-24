@@ -10,6 +10,8 @@ public enum Error {
     /* 400 */
     BAD_REQUEST_ERROR(HttpStatus.BAD_REQUEST, 40000, "적절하지 않은 요청입니다."),
     INSUFFICIENT_POINTS(HttpStatus.BAD_REQUEST, 40001, "포인트가 부족합니다."),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, 40003, "결제 금액이 주문 금액과 일치하지 않습니다."),
+    PAYMENT_STATUS_ERROR(HttpStatus.BAD_REQUEST, 40004, "예상치 못한 결제 상태입니다."),
 
     /* 401 */
     INVALID_TOKEN_ERROR(HttpStatus.UNAUTHORIZED, 40100, "유효하지 않은 토큰입니다."),

@@ -44,7 +44,7 @@ public class Order extends BaseEntity {
     private BigDecimal pointsToEarn; // 적립될 적립금
 
     @Column
-    private BigDecimal totalPrice; // 결제된 총 금액
+    private BigDecimal amount; // 결제된 총 금액
 
     @Column
     private BigDecimal shippingCost;

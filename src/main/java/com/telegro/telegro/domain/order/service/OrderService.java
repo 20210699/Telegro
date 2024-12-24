@@ -120,12 +120,23 @@ public class OrderService {
                 )
                 .orElseGet(() -> deliveryAddressRepository.save(deliveryAddress));
 
+        BigDecimal totalPrice = BigDecimal.ZERO;
+
+        for (Cart cart : temporaryOrder.getCarts()) {
+            totalPrice = totalPrice.add(cart.getTotalPrice());
+            cartRepository.save(cart);
+        }
+
+        totalPrice = totalPrice.subtract(request.pointsToUse()).add(request.shoppingCost());
+        log.info("결제 해야하는 금액 : " + totalPrice.toPlainString());
+
         Order order = Order.builder()
                 .orderStatus(OrderStatus.ORDER_CREATED)
                 .paymentMethod(request.paymentMethod())
                 .paymentStatus(PaymentStatus.FAILED)
                 .pointsToUse(request.pointsToUse())
                 .pointsToEarn(request.pointsToEarn())
+                .amount(totalPrice)
                 .shippingCost(request.shoppingCost())
                 .request(request.request())
                 .carts(temporaryOrder.getCarts())
@@ -148,6 +159,7 @@ public class OrderService {
                 .paymentMethod(savedOrder.getPaymentMethod())
                 .usedPoint(request.pointsToUse())
                 .shippingCost(savedOrder.getShippingCost())
+                .totalPrice(savedOrder.getAmount())
                 .build();
     }
 

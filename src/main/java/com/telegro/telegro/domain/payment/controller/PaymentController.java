@@ -52,7 +52,7 @@ public class PaymentController implements PaymentControllerDocs{
     }
 
     @Transactional
-    @PostMapping("api/payments/{imp_uid}")
+    @PostMapping("/api/payments/{imp_uid}")
     public SuccessResponse<?> validatePayment(String imp_uid) throws IamportResponseException, IOException {
         Payment payment = iamportClient.paymentByImpUid(imp_uid).getResponse();
 
@@ -65,23 +65,30 @@ public class PaymentController implements PaymentControllerDocs{
 
             order.setOrderNumber(imp_uid);
             order.setReceiptUrl(payment.getReceiptUrl());
-            order.setTotalPrice(payment.getAmount());
 
             for (Cart cart : order.getCarts()) {
                 cart.setCartStatus(CartStatus.ORDERED);
             }
 
-            // Todo : 가상 계좌 주문 내역과 실제 지불된 금액 비교
+            if(order.getAmount().compareTo(payment.getAmount()) == 0){
+                switch (payment.getStatus()) {
+                    case "ready" -> {return SuccessResponse.of("가상 계좌 발급 완료");}
+
+                    case "paid" -> {return SuccessResponse.of("결제 완료");}
+
+                    default -> throw CustomException.of(Error.PAYMENT_STATUS_ERROR);
+                }
+            } else {
+                throw CustomException.of(Error.PAYMENT_AMOUNT_MISMATCH);
+            }
 
         } catch (JsonProcessingException e) {
             log.error("JSON 파싱 오류 발생: {}", payment.getCustomData(), e);
             throw CustomException.of(Error.INTERNAL_SERVER_ERROR);
         }
-
-        return SuccessResponse.of();
     }
 
-    @PostMapping("api/payments/cancel/{orderId}")
+    @PostMapping("/api/payments/cancel/{orderId}")
     public SuccessResponse<?> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
 
         Order order = orderRepository.findById(orderId)
@@ -121,7 +128,7 @@ public class PaymentController implements PaymentControllerDocs{
                     order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
                     order.setPaymentStatus(PaymentStatus.COMPLETED);
 
-                    order.getUser().setTotalPrice(order.getTotalPrice().add(order.getUser().getTotalPrice()));
+                    order.getUser().setTotalPrice(order.getAmount().add(order.getUser().getTotalPrice()));
                     order.getUser().setPoint(order.getUser().getPoint()
                             .subtract(order.getPointsToUse())
                             .add(order.getPointsToEarn()));
@@ -130,7 +137,7 @@ public class PaymentController implements PaymentControllerDocs{
                     order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
                     order.setPaymentStatus(PaymentStatus.PENDING);
 
-                    order.getUser().setTotalPrice(order.getTotalPrice().add(order.getUser().getTotalPrice()));
+                    order.getUser().setTotalPrice(order.getAmount().add(order.getUser().getTotalPrice()));
                     order.getUser().setPoint(order.getUser().getPoint()
                             .subtract(order.getPointsToUse())
                             .add(order.getPointsToEarn()));
@@ -139,7 +146,7 @@ public class PaymentController implements PaymentControllerDocs{
                     order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
                     order.setPaymentStatus(PaymentStatus.CANCELLED);
 
-                    order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getTotalPrice()));
+                    order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
                     order.getUser().setPoint(order.getUser().getPoint()
                             .subtract(order.getPointsToEarn())
                             .add(order.getPointsToUse()));
