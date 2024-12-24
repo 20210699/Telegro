@@ -57,9 +57,6 @@ public record OrderDetailResponseDTO(
                         .map(CartProductDTO::totalPrice)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                BigDecimal discountPrice = price.subtract(order.getTotalPrice())
-                                                .add(order.getShippingCost());
-
                 return OrderDetailResponseDTO.builder()
                         .orderId(order.getId())
                         .orderDate(order.getCreatedAt())
@@ -70,9 +67,9 @@ public record OrderDetailResponseDTO(
                         .user(user)
                         .deliveryAddress(deliveryAddress)
                         .price(price)
-                        .discountPrice(discountPrice)
+                        .discountPrice(order.getPointsToUse())
                         .shippingCost(order.getShippingCost())
-                        .totalPrice(order.getTotalPrice())
+                        .totalPrice(order.getAmount())
                         .paymentMethod(order.getPaymentMethod())
                         .receipt_url(order.getReceiptUrl())
                         .cash_receipt_url(order.getCashReceiptUrl())
