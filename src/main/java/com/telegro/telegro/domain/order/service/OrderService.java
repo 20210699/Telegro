@@ -3,7 +3,6 @@ package com.telegro.telegro.domain.order.service;
 import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
 import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
-import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
@@ -34,6 +33,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -128,7 +128,7 @@ public class OrderService {
         }
 
         totalPrice = totalPrice.subtract(request.pointsToUse()).add(request.shoppingCost());
-        log.info("결제 해야하는 금액 : " + totalPrice.toPlainString());
+        log.info("결제 해야하는 금액 : {}", totalPrice.toPlainString());
 
         Order order = Order.builder()
                 .orderStatus(OrderStatus.ORDER_CREATED)
@@ -170,20 +170,30 @@ public class OrderService {
 
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Order> orders;
-        if (user.getRole().equals(Role.ADMIN)) {
-            orders = findOrdersByDateRange(startDate, endDate, pageRequest, null);
-        } else {
-            orders = findOrdersByDateRange(startDate, endDate, pageRequest, user);
-        }
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
+
+        Page<Order> orders = orderRepository.findOrdersByDateRangeAndUser(
+                startDateTime,
+                endDateTime,
+                user.getRole().equals(Role.ADMIN) ? null : user,
+                pageRequest
+        );
 
         boolean isLast = orders.isLast();
         int totalPage = orders.getTotalPages();
         long totalElement = orders.getTotalElements();
+        BigDecimal totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(
+                startDateTime,
+                endDateTime,
+                user.getRole().equals(Role.ADMIN) ? null : user
+        );
 
         List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
                 .map(order -> {
-                    List<CartProductDTO> products = order.getCarts().stream().map(CartProductDTO::of).toList();
+                    List<CartProductDTO> products = order.getCarts().stream()
+                            .map(CartProductDTO::of)
+                            .toList();
 
                     String username;
                     if (order.getUser().getRole().equals(Role.MEMBER) || order.getUser().getRole().equals(Role.ADMIN)) {
@@ -203,31 +213,9 @@ public class OrderService {
                 .isLast(isLast)
                 .totalPage(totalPage)
                 .totalElement(totalElement)
+                .totalPrice(totalPrice)
                 .orders(orderDTOs)
                 .build();
-    }
-
-    private Page<Order> findOrdersByDateRange(LocalDate startDate, LocalDate endDate, PageRequest pageRequest, User user) {
-        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
-        LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(23, 59, 59) : null;
-
-        if (startDateTime != null && endDateTime != null) {
-            return (user == null)
-                    ? orderRepository.findByCreatedAtBetween(startDateTime, endDateTime, pageRequest)
-                    : orderRepository.findByCreatedAtBetweenAndUser(startDateTime, endDateTime, user, pageRequest);
-        } else if (startDateTime != null) {
-            return (user == null)
-                    ? orderRepository.findByCreatedAtAfter(startDateTime, pageRequest)
-                    : orderRepository.findByCreatedAtAfterAndUser(startDateTime, user, pageRequest);
-        } else if (endDateTime != null) {
-            return (user == null)
-                    ? orderRepository.findByCreatedAtBefore(endDateTime, pageRequest)
-                    : orderRepository.findByCreatedAtBeforeAndUser(endDateTime, user, pageRequest);
-        } else {
-            return (user == null)
-                    ? orderRepository.findAll(pageRequest)
-                    : orderRepository.findByUser(user, pageRequest);
-        }
     }
 
     @Transactional
