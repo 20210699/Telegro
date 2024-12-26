@@ -33,7 +33,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 @Slf4j
 @Service
@@ -164,7 +163,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
+    public OrderListDTO getOrders(Long id, String filteredBy, String query, LocalDate startDate, LocalDate endDate, int page, int size) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
@@ -217,6 +216,61 @@ public class OrderService {
                 .orders(orderDTOs)
                 .build();
     }
+
+    /*@Transactional(readOnly = true)
+    public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
+
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
+
+        Page<Order> orders = orderRepository.findOrdersByDateRangeAndUser(
+                startDateTime,
+                endDateTime,
+                user.getRole().equals(Role.ADMIN) ? null : user,
+                pageRequest
+        );
+
+        boolean isLast = orders.isLast();
+        int totalPage = orders.getTotalPages();
+        long totalElement = orders.getTotalElements();
+        BigDecimal totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(
+                startDateTime,
+                endDateTime,
+                user.getRole().equals(Role.ADMIN) ? null : user
+        );
+
+        List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
+                .map(order -> {
+                    List<CartProductDTO> products = order.getCarts().stream()
+                            .map(CartProductDTO::of)
+                            .toList();
+
+                    String username;
+                    if (order.getUser().getRole().equals(Role.MEMBER) || order.getUser().getRole().equals(Role.ADMIN)) {
+                        username = order.getUser().getUsername();
+                    } else {
+                        Company company = companyRepository.findByUserId(order.getUser().getId())
+                                .orElseThrow(() -> CustomException.of(Error.COMPANY_NOT_FOUND));
+                        username = company.getCompanyName();
+                    }
+                    UserOrderInfoDTO userDTO = UserOrderInfoDTO.of(order.getUser(), username);
+
+                    return OrderDetailDTO.of(order, products, userDTO);
+                })
+                .toList();
+
+        return OrderListDTO.builder()
+                .isLast(isLast)
+                .totalPage(totalPage)
+                .totalElement(totalElement)
+                .totalPrice(totalPrice)
+                .orders(orderDTOs)
+                .build();
+    }*/
 
     @Transactional
     public void updateOrderStatus(Long id, Long orderId, OrderStatus status) {

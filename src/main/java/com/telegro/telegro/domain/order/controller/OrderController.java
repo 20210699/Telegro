@@ -57,9 +57,15 @@ public class OrderController implements OrderControllerDocs{
     }
 
     @GetMapping
+    public SuccessResponse<OrderListDTO> getOrders(Long id, String filteredBy, String query, LocalDate startDate, LocalDate endDate, int page, int size) {
+        return SuccessResponse.of(orderService.getOrders(id, filteredBy, query, startDate, endDate, page, size));
+    }
+
+    /*@GetMapping
     public SuccessResponse<OrderListDTO> getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size){
         return SuccessResponse.of(orderService.getOrders(id, startDate, endDate, page, size));
-    }
+    }*/
+
 
     @GetMapping("/{orderId}")
     public SuccessResponse<OrderDetailResponseDTO> getOrderDetail(Long id, Long orderId) {

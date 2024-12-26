@@ -65,12 +65,15 @@ public class PaymentController implements PaymentControllerDocs{
 
             order.setOrderNumber(imp_uid);
             order.setReceiptUrl(payment.getReceiptUrl());
+            // Todo : order 바로 save
 
             for (Cart cart : order.getCarts()) {
                 cart.setCartStatus(CartStatus.ORDERED);
             }
 
             if(order.getAmount().compareTo(payment.getAmount()) == 0){
+                // Todo : 입금 금액 검증은 어디에서? -> 은행에서 자동으로 해줌
+                // Todo : 문제를 알았다. order는 2개인데 payment가 1개
                 switch (payment.getStatus()) {
                     case "ready" -> {return SuccessResponse.of("가상 계좌 발급 완료");}
 
