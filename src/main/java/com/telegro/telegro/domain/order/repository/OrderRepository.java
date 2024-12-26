@@ -18,6 +18,66 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
+    @Query("SELECT DISTINCT o FROM Order o " +
+            "JOIN o.carts c " +
+            "JOIN c.product p " +
+            "WHERE (:startDate IS NULL OR o.createdAt >= :startDate) " +
+            "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
+            "AND (:user IS NULL OR o.user = :user) " +
+            "AND (p.productName LIKE %:query% OR p.productModel LIKE %:query%)")
+    Page<Order> findOrdersByProductAndQuery(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("user") User user,
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    @Query("SELECT COALESCE(SUM(o.amount), 0) FROM Order o " +
+            "JOIN o.carts c " +
+            "JOIN c.product p " +
+            "WHERE (:startDate IS NULL OR o.createdAt >= :startDate) " +
+            "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
+            "AND (:user IS NULL OR o.user = :user) " +
+            "AND (o.paymentStatus == 'COMPLETED' OR o.paymentStatus == 'PENDING') " +
+            "AND (p.productName LIKE %:query% OR p.productModel LIKE %:query%)")
+    BigDecimal findTotalAmountByProductAndQuery(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("user") User user,
+            @Param("query") String query
+    );
+
+    @Query("SELECT DISTINCT o FROM Order o " +
+            "JOIN o.user u " +
+            "JOIN u.company c " +
+            "WHERE (:startDate IS NULL OR o.createdAt >= :startDate) " +
+            "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
+            "AND (:user IS NULL OR o.user = :user) " +
+            "AND (u.username LIKE %:query% OR c.companyName LIKE %:query%)")
+    Page<Order> findOrdersByUserAndQuery(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("user") User user,
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    @Query("SELECT COALESCE(SUM(o.amount), 0) FROM Order o " +
+            "JOIN o.user u " +
+            "JOIN u.company c " +
+            "WHERE (:startDate IS NULL OR o.createdAt >= :startDate) " +
+            "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
+            "AND (:user IS NULL OR o.user = :user) " +
+            "AND (o.paymentStatus == 'COMPLETED' OR o.paymentStatus == 'PENDING') " +
+            "AND (u.username LIKE %:query% OR c.companyName LIKE %:query%)")
+    BigDecimal findTotalAmountByUserAndQuery(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("user") User user,
+            @Param("query") String query
+    );
+
     @Query("SELECT o FROM Order o WHERE (:startDate IS NULL OR o.createdAt >= :startDate) " +
             "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
             "AND (:user IS NULL OR o.user = :user)")

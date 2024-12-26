@@ -1,5 +1,6 @@
 package com.telegro.telegro.domain.user.entity;
 
+import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.global.common.BaseEntity;
@@ -56,4 +57,8 @@ public class User extends BaseEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders;
+
+    @OneToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
 }

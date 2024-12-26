@@ -4,7 +4,6 @@ import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
 import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
-import com.telegro.telegro.domain.company.entity.Company;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.*;
@@ -42,7 +41,6 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final DeliveryAddressRepository deliveryAddressRepository;
-    private final CompanyRepository companyRepository;
 
     @Transactional
     public Order createOrder(Long id, List<Long> cartId) {
@@ -172,21 +170,23 @@ public class OrderService {
         LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
         LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
 
-        Page<Order> orders = orderRepository.findOrdersByDateRangeAndUser(
-                startDateTime,
-                endDateTime,
-                user.getRole().equals(Role.ADMIN) ? null : user,
-                pageRequest
-        );
+        Page<Order> orders;
+        BigDecimal totalPrice;
+
+        if(filteredBy.equals("product")){
+            orders = orderRepository.findOrdersByProductAndQuery(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user,query,pageRequest);
+            totalPrice = orderRepository.findTotalAmountByProductAndQuery(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user,query);
+        } else if (filteredBy.equals("shipping")){
+            orders = orderRepository.findOrdersByUserAndQuery(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user,query,pageRequest);
+            totalPrice = orderRepository.findTotalAmountByUserAndQuery(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user,query);
+        } else {
+            orders = orderRepository.findOrdersByDateRangeAndUser(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user,pageRequest);
+            totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user);
+        }
 
         boolean isLast = orders.isLast();
         int totalPage = orders.getTotalPages();
         long totalElement = orders.getTotalElements();
-        BigDecimal totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(
-                startDateTime,
-                endDateTime,
-                user.getRole().equals(Role.ADMIN) ? null : user
-        );
 
         List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
                 .map(order -> {
@@ -198,9 +198,7 @@ public class OrderService {
                     if (order.getUser().getRole().equals(Role.MEMBER) || order.getUser().getRole().equals(Role.ADMIN)) {
                         username = order.getUser().getUsername();
                     } else {
-                        Company company = companyRepository.findByUserId(order.getUser().getId())
-                                .orElseThrow(() -> CustomException.of(Error.COMPANY_NOT_FOUND));
-                        username = company.getCompanyName();
+                        username = order.getUser().getCompany().getCompanyName();
                     }
                     UserOrderInfoDTO userDTO = UserOrderInfoDTO.of(order.getUser(), username);
 
@@ -216,61 +214,6 @@ public class OrderService {
                 .orders(orderDTOs)
                 .build();
     }
-
-    /*@Transactional(readOnly = true)
-    public OrderListDTO getOrders(Long id, LocalDate startDate, LocalDate endDate, int page, int size) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
-
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
-        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
-
-        Page<Order> orders = orderRepository.findOrdersByDateRangeAndUser(
-                startDateTime,
-                endDateTime,
-                user.getRole().equals(Role.ADMIN) ? null : user,
-                pageRequest
-        );
-
-        boolean isLast = orders.isLast();
-        int totalPage = orders.getTotalPages();
-        long totalElement = orders.getTotalElements();
-        BigDecimal totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(
-                startDateTime,
-                endDateTime,
-                user.getRole().equals(Role.ADMIN) ? null : user
-        );
-
-        List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
-                .map(order -> {
-                    List<CartProductDTO> products = order.getCarts().stream()
-                            .map(CartProductDTO::of)
-                            .toList();
-
-                    String username;
-                    if (order.getUser().getRole().equals(Role.MEMBER) || order.getUser().getRole().equals(Role.ADMIN)) {
-                        username = order.getUser().getUsername();
-                    } else {
-                        Company company = companyRepository.findByUserId(order.getUser().getId())
-                                .orElseThrow(() -> CustomException.of(Error.COMPANY_NOT_FOUND));
-                        username = company.getCompanyName();
-                    }
-                    UserOrderInfoDTO userDTO = UserOrderInfoDTO.of(order.getUser(), username);
-
-                    return OrderDetailDTO.of(order, products, userDTO);
-                })
-                .toList();
-
-        return OrderListDTO.builder()
-                .isLast(isLast)
-                .totalPage(totalPage)
-                .totalElement(totalElement)
-                .totalPrice(totalPrice)
-                .orders(orderDTOs)
-                .build();
-    }*/
 
     @Transactional
     public void updateOrderStatus(Long id, Long orderId, OrderStatus status) {
