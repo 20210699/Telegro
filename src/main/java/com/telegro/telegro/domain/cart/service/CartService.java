@@ -61,8 +61,9 @@ public class CartService {
     }
 
     private Cart updateExistingCart(Cart existingCart, CartRequestDTO request) {
-        existingCart.setQuantity(existingCart.getQuantity() + request.quantity());
-        // Todo : totalPrice도 반영했어야지 예빈아!!!!
+        int quantity = existingCart.getQuantity() + request.quantity();
+        existingCart.setQuantity(quantity);
+        existingCart.setTotalPrice(existingCart.getPrice().multiply(BigDecimal.valueOf(quantity)));
         return existingCart;
     }
 
