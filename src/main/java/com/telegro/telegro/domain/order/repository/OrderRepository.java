@@ -39,7 +39,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "WHERE (:startDate IS NULL OR o.createdAt >= :startDate) " +
             "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
             "AND (:user IS NULL OR o.user = :user) " +
-            "AND (o.paymentStatus == 'COMPLETED' OR o.paymentStatus == 'PENDING') " +
+            "AND (o.paymentStatus = 'COMPLETED' OR o.paymentStatus = 'PENDING') " +
             "AND (p.productName LIKE %:query% OR p.productModel LIKE %:query%)")
     BigDecimal findTotalAmountByProductAndQuery(
             @Param("startDate") LocalDateTime startDate,
@@ -69,7 +69,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "WHERE (:startDate IS NULL OR o.createdAt >= :startDate) " +
             "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
             "AND (:user IS NULL OR o.user = :user) " +
-            "AND (o.paymentStatus == 'COMPLETED' OR o.paymentStatus == 'PENDING') " +
+            "AND (o.paymentStatus = 'COMPLETED' OR o.paymentStatus = 'PENDING') " +
             "AND (u.username LIKE %:query% OR c.companyName LIKE %:query%)")
     BigDecimal findTotalAmountByUserAndQuery(
             @Param("startDate") LocalDateTime startDate,
@@ -91,6 +91,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT COALESCE(SUM(o.amount), 0) FROM Order o " +
             "WHERE (:startDate IS NULL OR o.createdAt >= :startDate) " +
             "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
+            "AND (o.paymentStatus = 'COMPLETED' OR o.paymentStatus = 'PENDING') " +
             "AND (:user IS NULL OR o.user = :user)")
     BigDecimal findTotalAmountByDateRangeAndUser(@Param("startDate") LocalDateTime startDate,
                                                  @Param("endDate") LocalDateTime endDate,
