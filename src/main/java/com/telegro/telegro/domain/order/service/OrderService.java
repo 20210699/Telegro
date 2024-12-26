@@ -78,7 +78,7 @@ public class OrderService {
         BigDecimal totalPrice = BigDecimal.ZERO;
 
         for (Cart cart : carts) {
-            totalPrice = totalPrice.add(cart.getTotalPrice()); // add 메서드로 합산
+            totalPrice = totalPrice.add(cart.getTotalPrice());
         }
 
         BigDecimal points = totalPrice.multiply(new BigDecimal("0.01")).setScale(0, RoundingMode.HALF_UP);

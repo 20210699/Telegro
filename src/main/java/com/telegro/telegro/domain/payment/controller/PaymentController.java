@@ -65,24 +65,18 @@ public class PaymentController implements PaymentControllerDocs{
 
             order.setOrderNumber(imp_uid);
             order.setReceiptUrl(payment.getReceiptUrl());
-            // Todo : order 바로 save
+            orderRepository.save(order);
 
             for (Cart cart : order.getCarts()) {
                 cart.setCartStatus(CartStatus.ORDERED);
             }
 
-            if(order.getAmount().compareTo(payment.getAmount()) == 0){
-                // Todo : 입금 금액 검증은 어디에서? -> 은행에서 자동으로 해줌
-                // Todo : 문제를 알았다. order는 2개인데 payment가 1개
-                switch (payment.getStatus()) {
-                    case "ready" -> {return SuccessResponse.of("가상 계좌 발급 완료");}
+            switch (payment.getStatus()) {
+                case "ready" -> {return SuccessResponse.of("가상 계좌 발급 완료");}
 
-                    case "paid" -> {return SuccessResponse.of("결제 완료");}
+                case "paid" -> {return SuccessResponse.of("결제 완료");}
 
-                    default -> throw CustomException.of(Error.PAYMENT_STATUS_ERROR);
-                }
-            } else {
-                throw CustomException.of(Error.PAYMENT_AMOUNT_MISMATCH);
+                default -> throw CustomException.of(Error.PAYMENT_STATUS_ERROR);
             }
 
         } catch (JsonProcessingException e) {
@@ -125,38 +119,34 @@ public class PaymentController implements PaymentControllerDocs{
             return SuccessResponse.of();
         }
 
-        if (Objects.equals(request.getStatus(), payment.getStatus())) {
-            switch (payment.getStatus()) {
-                case "paid" -> {
-                    order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
-                    order.setPaymentStatus(PaymentStatus.COMPLETED);
+        switch (payment.getStatus()) {
+            case "paid" -> {
+                order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
+                order.setPaymentStatus(PaymentStatus.COMPLETED);
 
-                    order.getUser().setTotalPrice(order.getAmount().add(order.getUser().getTotalPrice()));
-                    order.getUser().setPoint(order.getUser().getPoint()
-                            .subtract(order.getPointsToUse())
-                            .add(order.getPointsToEarn()));
-                }
-                case "ready" -> {
-                    order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
-                    order.setPaymentStatus(PaymentStatus.PENDING);
-
-                    order.getUser().setPoint(order.getUser().getPoint()
-                            .subtract(order.getPointsToUse())
-                            .add(order.getPointsToEarn()));
-                }
-                case "cancelled" -> {
-                    order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
-                    order.setPaymentStatus(PaymentStatus.CANCELLED);
-
-                    order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
-                    order.getUser().setPoint(order.getUser().getPoint()
-                            .subtract(order.getPointsToEarn())
-                            .add(order.getPointsToUse()));
-                }
-                default -> throw new IllegalStateException("예상치 못한 결제 상태: " + payment.getStatus());
+                order.getUser().setTotalPrice(order.getAmount().add(order.getUser().getTotalPrice()));
+                order.getUser().setPoint(order.getUser().getPoint()
+                        .subtract(order.getPointsToUse())
+                        .add(order.getPointsToEarn()));
             }
-        } else {
-            throw new IllegalStateException("결제 상태가 일치하지 않습니다.");
+            case "ready" -> {
+                order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
+                order.setPaymentStatus(PaymentStatus.PENDING);
+
+                order.getUser().setPoint(order.getUser().getPoint()
+                        .subtract(order.getPointsToUse())
+                        .add(order.getPointsToEarn()));
+            }
+            case "cancelled" -> {
+                order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+                order.setPaymentStatus(PaymentStatus.CANCELLED);
+
+                order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
+                order.getUser().setPoint(order.getUser().getPoint()
+                        .subtract(order.getPointsToEarn())
+                        .add(order.getPointsToUse()));
+            }
+            default -> throw new IllegalStateException("예상치 못한 결제 상태: " + payment.getStatus());
         }
 
         return SuccessResponse.of();
