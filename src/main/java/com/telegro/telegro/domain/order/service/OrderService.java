@@ -173,15 +173,15 @@ public class OrderService {
         Page<Order> orders;
         BigDecimal totalPrice;
 
-        if(filteredBy.equals("product")){
-            orders = orderRepository.findOrdersByProductAndQuery(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user,query,pageRequest);
-            totalPrice = orderRepository.findTotalAmountByProductAndQuery(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user,query);
-        } else if (filteredBy.equals("shipping")){
-            orders = orderRepository.findOrdersByUserAndQuery(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user,query,pageRequest);
-            totalPrice = orderRepository.findTotalAmountByUserAndQuery(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user,query);
+        if ("product".equals(filteredBy)) {
+            orders = orderRepository.findOrdersByProductAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, query, pageRequest);
+            totalPrice = orderRepository.findTotalAmountByProductAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, query);
+        } else if ("user".equals(filteredBy)) {
+            orders = orderRepository.findOrdersByUserAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, query, pageRequest);
+            totalPrice = orderRepository.findTotalAmountByUserAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, query);
         } else {
-            orders = orderRepository.findOrdersByDateRangeAndUser(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user,pageRequest);
-            totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(startDateTime,endDateTime,user.getRole().equals(Role.ADMIN) ? null : user);
+            orders = orderRepository.findOrdersByDateRangeAndUser(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, pageRequest);
+            totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user);
         }
 
         boolean isLast = orders.isLast();
