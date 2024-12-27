@@ -18,8 +18,8 @@ import java.util.Map;
 public class ProductController implements ProductControllerDocs{
     private final ProductService productService;
 
-    @GetMapping("/products")
-    public SuccessResponse<ProductListDTO> getProducts(Long id, Category category, int page, int size) {
+    @GetMapping
+    public SuccessResponse<ProductListDTO> getProducts(Long id, String query, Category category, int page, int size) {
         return SuccessResponse.of(productService.getProducts(id, category, page, size));
     }
 

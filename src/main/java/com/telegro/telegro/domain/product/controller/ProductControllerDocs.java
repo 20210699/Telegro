@@ -24,6 +24,7 @@ public interface ProductControllerDocs {
     @ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
     public SuccessResponse<ProductListDTO> getProducts(
             @LoginInfo Long id,
+            @RequestParam(value = "q", required = false) String query,
             @RequestParam(value = "category") Category category,
             @RequestParam(value = "page") int page,
             @RequestParam(value = "size") int size);
