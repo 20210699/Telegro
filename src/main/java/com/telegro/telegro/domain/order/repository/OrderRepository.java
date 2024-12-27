@@ -50,7 +50,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT DISTINCT o FROM Order o " +
             "JOIN o.user u " +
-            "JOIN u.company c " +
+            "LEFT JOIN u.company c " +
             "WHERE (:startDate IS NULL OR o.createdAt >= :startDate) " +
             "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
             "AND (:user IS NULL OR o.user = :user) " +
@@ -65,7 +65,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT COALESCE(SUM(o.amount), 0) FROM Order o " +
             "JOIN o.user u " +
-            "JOIN u.company c " +
+            "LEFT JOIN u.company c " +
             "WHERE (:startDate IS NULL OR o.createdAt >= :startDate) " +
             "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
             "AND (:user IS NULL OR o.user = :user) " +

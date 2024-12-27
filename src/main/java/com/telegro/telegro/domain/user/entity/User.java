@@ -58,7 +58,6 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders;
 
-    @OneToOne
-    @JoinColumn(name = "company_id")
+    @OneToOne(mappedBy = "user")
     private Company company;
 }
