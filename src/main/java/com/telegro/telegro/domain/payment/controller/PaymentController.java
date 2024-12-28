@@ -101,7 +101,8 @@ public class PaymentController implements PaymentControllerDocs{
         }
 
         if(user.getCompany() != null) {
-            orderService.updateOrderStatus(id, orderId, OrderStatus.ORDER_CANCELLED);
+            order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+            order.setPaymentStatus(PaymentStatus.CANCELLED);
         } else {
             iamportClient.cancelPaymentByImpUid(new CancelData(order.getOrderNumber(), true));
         }
