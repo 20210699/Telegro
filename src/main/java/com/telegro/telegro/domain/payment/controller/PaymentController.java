@@ -12,7 +12,6 @@ import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
-import com.telegro.telegro.domain.order.service.OrderService;
 import com.telegro.telegro.domain.payment.dto.request.WebhookDTO;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Objects;
 
 @RestController
 @RequestMapping
@@ -38,7 +36,6 @@ import java.util.Objects;
 public class PaymentController implements PaymentControllerDocs{
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
-    private final OrderService orderService;
     private IamportClient iamportClient;
     private final ObjectMapper mapper;
 
@@ -103,6 +100,7 @@ public class PaymentController implements PaymentControllerDocs{
         if(user.getCompany() != null) {
             order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
             order.setPaymentStatus(PaymentStatus.CANCELLED);
+            orderRepository.save(order);
         } else {
             iamportClient.cancelPaymentByImpUid(new CancelData(order.getOrderNumber(), true));
         }
