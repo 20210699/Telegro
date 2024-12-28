@@ -12,6 +12,7 @@ import com.telegro.telegro.domain.order.entity.Order;
 import com.telegro.telegro.domain.order.entity.enums.OrderStatus;
 import com.telegro.telegro.domain.order.entity.enums.PaymentStatus;
 import com.telegro.telegro.domain.order.repository.OrderRepository;
+import com.telegro.telegro.domain.order.service.OrderService;
 import com.telegro.telegro.domain.payment.dto.request.WebhookDTO;
 import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.entity.enums.Role;
@@ -37,6 +38,7 @@ import java.util.Objects;
 public class PaymentController implements PaymentControllerDocs{
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final OrderService orderService;
     private IamportClient iamportClient;
     private final ObjectMapper mapper;
 
@@ -98,7 +100,11 @@ public class PaymentController implements PaymentControllerDocs{
             throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
 
-        iamportClient.cancelPaymentByImpUid(new CancelData(order.getOrderNumber(), true));
+        if(user.getCompany() != null) {
+            orderService.updateOrderStatus(id, orderId, OrderStatus.ORDER_CANCELLED);
+        } else {
+            iamportClient.cancelPaymentByImpUid(new CancelData(order.getOrderNumber(), true));
+        }
 
         return SuccessResponse.of();
     }
