@@ -63,19 +63,21 @@ public class UserService {
                 .password(passwordEncoder.encode(signUpUserInfoDto.getPassword()))
                 .build();
 
-        DeliveryAddress deliveryAddress = DeliveryAddress.builder()
-                .name("기본 배송지")
-                .phoneNumber(signUpUserInfoDto.getPhone())
-                .address(signUpUserInfoDto.getAddress())
-                .addressDetail(signUpUserInfoDto.getAddressDetail())
-                .zipcode(signUpUserInfoDto.getZipCode())
-                .user(user)
-                .build();
-
-        deliveryAddressRepository.save(deliveryAddress);
-
         try {
             userRepository.save(user);
+
+            DeliveryAddress deliveryAddress = DeliveryAddress.builder()
+                    .name("기본 배송지")
+                    .phoneNumber(signUpUserInfoDto.getPhone())
+                    .address(signUpUserInfoDto.getAddress())
+                    .addressDetail(signUpUserInfoDto.getAddressDetail())
+                    .zipcode(signUpUserInfoDto.getZipCode())
+                    .user(user)
+                    .build();
+
+            DeliveryAddress savedAddress = deliveryAddressRepository.save(deliveryAddress);
+
+            setDefaultDeliveryAddress(user.getId(), savedAddress.getId());
         } catch (DuplicateKeyException e) {
             throw new RuntimeException("try to save duplicated user");
         }
