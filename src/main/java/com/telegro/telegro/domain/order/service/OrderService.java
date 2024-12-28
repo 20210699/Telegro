@@ -3,6 +3,7 @@ package com.telegro.telegro.domain.order.service;
 import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
 import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
+import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
@@ -121,16 +122,30 @@ public class OrderService {
 
         for (Cart cart : temporaryOrder.getCarts()) {
             totalPrice = totalPrice.add(cart.getTotalPrice());
+            if (user.getCompany()!=null) {
+                cart.setCartStatus(CartStatus.ORDERED);
+            }
             cartRepository.save(cart);
         }
 
         totalPrice = totalPrice.subtract(request.pointsToUse()).add(request.shoppingCost());
         log.info("결제 해야하는 금액 : {}", totalPrice.toPlainString());
 
+        PaymentStatus paymentStatus;
+        OrderStatus orderStatus;
+
+        if(user.getCompany() != null){
+            paymentStatus = PaymentStatus.PENDING;
+            orderStatus = OrderStatus.ORDER_COMPLETED;
+        } else {
+            paymentStatus = PaymentStatus.FAILED;
+            orderStatus = OrderStatus.ORDER_CREATED;
+        }
+
         Order order = Order.builder()
-                .orderStatus(OrderStatus.ORDER_CREATED)
+                .orderStatus(orderStatus)
                 .paymentMethod(request.paymentMethod())
-                .paymentStatus(PaymentStatus.FAILED)
+                .paymentStatus(paymentStatus)
                 .pointsToUse(request.pointsToUse())
                 .pointsToEarn(request.pointsToEarn())
                 .amount(totalPrice)
