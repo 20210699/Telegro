@@ -44,8 +44,10 @@ public class CompanyService {
                 .companyDescription(companyRequestDTO.getCompanyDescription())
                 .user(user)
                 .build();
+
         try {
             companyRepository.save(company);
+            user.setCompany(company);
         } catch (DuplicateKeyException e) {
             throw new RuntimeException("try to save duplicated company");
         }

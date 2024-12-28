@@ -26,6 +26,8 @@ public record OrderDetailDTO(
         LocalDateTime createdAt,
         @Schema(description = "주문 상태")
         OrderStatus orderStatus,
+        @Schema(description = "주문 총 가격")
+        BigDecimal amount,
         @Schema(description = "배송비")
         BigDecimal shoppingCost,
         @Schema(description = "결제 방식")
@@ -45,6 +47,7 @@ public record OrderDetailDTO(
                         .products(products)
                         .createdAt(order.getCreatedAt())
                         .orderStatus(order.getOrderStatus())
+                        .amount(order.getAmount())
                         .shoppingCost(order.getShippingCost())
                         .paymentMethod(order.getPaymentMethod())
                         .paymentStatus(order.getPaymentStatus())
