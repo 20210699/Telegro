@@ -84,10 +84,6 @@ public class ProductService {
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<Product> products = productRepository.findByCategory(category, pageRequest);
 
-        if (products.isEmpty()) {
-            throw CustomException.of(Error.PRODUCT_NOT_FOUND);
-        }
-
         // Product를 ProductResponseDTO로 변환
         List<ProductResponseDTO> productDTOs = products.stream()
                 .map(product -> {
