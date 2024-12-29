@@ -65,6 +65,7 @@ public class PaymentController implements PaymentControllerDocs{
             order.setOrderNumber(imp_uid);
             order.setReceiptUrl(payment.getReceiptUrl());
             orderRepository.save(order);
+            log.info("결제 검증 완료 및 주문 정보 저장 완료");
 
             for (Cart cart : order.getCarts()) {
                 cart.setCartStatus(CartStatus.ORDERED);
@@ -98,17 +99,17 @@ public class PaymentController implements PaymentControllerDocs{
             throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
 
-        if(order.getUser().getCompany() != null) {
-            order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
-            order.setPaymentStatus(PaymentStatus.CANCELLED);
-
-            order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
-            order.getUser().setPoint(order.getUser().getPoint()
-                    .subtract(order.getPointsToEarn())
-                    .add(order.getPointsToUse()));
-        } else {
+        if(order.getUser().getCompany() == null) {
             iamportClient.cancelPaymentByImpUid(new CancelData(order.getOrderNumber(), true));
         }
+
+        order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+        order.setPaymentStatus(PaymentStatus.CANCELLED);
+
+        order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
+        order.getUser().setPoint(order.getUser().getPoint()
+                .subtract(order.getPointsToEarn())
+                .add(order.getPointsToUse()));
 
         return SuccessResponse.of();
     }
@@ -118,10 +119,11 @@ public class PaymentController implements PaymentControllerDocs{
     public SuccessResponse<?> updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
 
         Payment payment = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse();
-        log.info("결제 정보 불러오기 : {}", payment);
+        log.info("결제 정보 불러오기 : {}", payment.getCustomData());
 
         Order order = orderRepository.findByOrderNumber(request.getImp_uid())
                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+        log.info("주문 번호 : {}", order.getOrderNumber());
 
         if (request.getStatus() == null || request.getStatus().equals("null")) {
             order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
