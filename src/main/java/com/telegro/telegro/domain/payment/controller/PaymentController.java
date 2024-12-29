@@ -118,6 +118,7 @@ public class PaymentController implements PaymentControllerDocs{
     public SuccessResponse<?> updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
 
         Payment payment = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse();
+        log.info("결제 정보 불러오기 : {}", payment);
 
         Order order = orderRepository.findByOrderNumber(request.getImp_uid())
                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
