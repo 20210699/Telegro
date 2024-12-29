@@ -137,6 +137,13 @@ public class OrderService {
         if(user.getCompany() != null){
             paymentStatus = PaymentStatus.PENDING;
             orderStatus = OrderStatus.ORDER_COMPLETED;
+
+            user.setTotalPrice(totalPrice.add(user.getTotalPrice()));
+            user.setPoint(user.getPoint()
+                    .subtract(request.pointsToUse())
+                    .add(request.pointsToEarn()));
+
+            log.info("사용자 point : {}", user.getPoint());
         } else {
             paymentStatus = PaymentStatus.FAILED;
             orderStatus = OrderStatus.ORDER_CREATED;
@@ -160,13 +167,6 @@ public class OrderService {
                 .map(CartResponseDTO::of).toList();
 
         Order savedOrder = orderRepository.save(order);
-
-        if(user.getCompany() != null) {
-            savedOrder.getUser().setTotalPrice(savedOrder.getAmount().add(order.getUser().getTotalPrice()));
-            savedOrder.getUser().setPoint(savedOrder.getUser().getPoint()
-                    .subtract(savedOrder.getPointsToUse())
-                    .add(savedOrder.getPointsToEarn()));
-        }
 
         return OrderResponseDTO.builder()
                 .id(savedOrder.getId())
