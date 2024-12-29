@@ -161,6 +161,13 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
+        if(user.getCompany() != null) {
+            savedOrder.getUser().setTotalPrice(savedOrder.getAmount().add(order.getUser().getTotalPrice()));
+            savedOrder.getUser().setPoint(savedOrder.getUser().getPoint()
+                    .subtract(savedOrder.getPointsToUse())
+                    .add(savedOrder.getPointsToEarn()));
+        }
+
         return OrderResponseDTO.builder()
                 .id(savedOrder.getId())
                 .createdAt(savedOrder.getCreatedAt())

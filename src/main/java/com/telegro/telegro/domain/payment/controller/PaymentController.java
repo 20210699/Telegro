@@ -84,6 +84,7 @@ public class PaymentController implements PaymentControllerDocs{
         }
     }
 
+    @Transactional
     @PostMapping("/api/payments/cancel/{orderId}")
     public SuccessResponse<?> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
 
@@ -100,7 +101,11 @@ public class PaymentController implements PaymentControllerDocs{
         if(user.getCompany() != null) {
             order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
             order.setPaymentStatus(PaymentStatus.CANCELLED);
-            orderRepository.save(order);
+
+            order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
+            order.getUser().setPoint(order.getUser().getPoint()
+                    .subtract(order.getPointsToEarn())
+                    .add(order.getPointsToUse()));
         } else {
             iamportClient.cancelPaymentByImpUid(new CancelData(order.getOrderNumber(), true));
         }
