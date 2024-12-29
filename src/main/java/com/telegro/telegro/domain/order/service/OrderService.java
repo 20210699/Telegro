@@ -5,7 +5,6 @@ import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
-import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.*;
 import com.telegro.telegro.domain.order.entity.Order;
@@ -249,6 +248,13 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
+        switch (status) {
+            case DELIVERY_COMPLETED, SHIPPING -> order.setPaymentStatus(PaymentStatus.COMPLETED);
+            default -> {
+                log.error("잘못된 주문 상태 : {}", status);
+                throw CustomException.of(Error.BAD_REQUEST_ERROR);
+            }
+        }
         order.setOrderStatus(status);
         orderRepository.save(order);
     }

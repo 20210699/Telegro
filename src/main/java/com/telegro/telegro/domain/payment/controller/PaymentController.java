@@ -98,7 +98,7 @@ public class PaymentController implements PaymentControllerDocs{
             throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
 
-        if(user.getCompany() != null) {
+        if(order.getUser().getCompany() != null) {
             order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
             order.setPaymentStatus(PaymentStatus.CANCELLED);
 
