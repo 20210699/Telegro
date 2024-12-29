@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Objects;
 
 @RestController
 @RequestMapping
@@ -85,6 +84,7 @@ public class PaymentController implements PaymentControllerDocs{
         }
     }
 
+    @Transactional
     @PostMapping("/api/payments/cancel/{orderId}")
     public SuccessResponse<?> cancelPayment(Long id, Long orderId) throws IamportResponseException, IOException {
 
@@ -98,7 +98,17 @@ public class PaymentController implements PaymentControllerDocs{
             throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
 
-        iamportClient.cancelPaymentByImpUid(new CancelData(order.getOrderNumber(), true));
+        if(order.getUser().getCompany() != null) {
+            order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+            order.setPaymentStatus(PaymentStatus.CANCELLED);
+
+            order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
+            order.getUser().setPoint(order.getUser().getPoint()
+                    .subtract(order.getPointsToEarn())
+                    .add(order.getPointsToUse()));
+        } else {
+            iamportClient.cancelPaymentByImpUid(new CancelData(order.getOrderNumber(), true));
+        }
 
         return SuccessResponse.of();
     }
@@ -108,6 +118,7 @@ public class PaymentController implements PaymentControllerDocs{
     public SuccessResponse<?> updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
 
         Payment payment = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse();
+        log.info("결제 정보 불러오기 : {}", payment);
 
         Order order = orderRepository.findByOrderNumber(request.getImp_uid())
                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));

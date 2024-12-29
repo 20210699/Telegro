@@ -3,8 +3,8 @@ package com.telegro.telegro.domain.order.service;
 import com.telegro.telegro.domain.cart.dto.response.CartProductDTO;
 import com.telegro.telegro.domain.cart.dto.response.CartResponseDTO;
 import com.telegro.telegro.domain.cart.entity.Cart;
+import com.telegro.telegro.domain.cart.entity.enums.CartStatus;
 import com.telegro.telegro.domain.cart.repository.CartRepository;
-import com.telegro.telegro.domain.company.repository.CompanyRepository;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.*;
 import com.telegro.telegro.domain.order.entity.Order;
@@ -121,16 +121,37 @@ public class OrderService {
 
         for (Cart cart : temporaryOrder.getCarts()) {
             totalPrice = totalPrice.add(cart.getTotalPrice());
+            if (user.getCompany()!=null) {
+                cart.setCartStatus(CartStatus.ORDERED);
+            }
             cartRepository.save(cart);
         }
 
         totalPrice = totalPrice.subtract(request.pointsToUse()).add(request.shoppingCost());
         log.info("결제 해야하는 금액 : {}", totalPrice.toPlainString());
 
+        PaymentStatus paymentStatus;
+        OrderStatus orderStatus;
+
+        if(user.getCompany() != null){
+            paymentStatus = PaymentStatus.PENDING;
+            orderStatus = OrderStatus.ORDER_COMPLETED;
+
+            user.setTotalPrice(totalPrice.add(user.getTotalPrice()));
+            user.setPoint(user.getPoint()
+                    .subtract(request.pointsToUse())
+                    .add(request.pointsToEarn()));
+
+            log.info("사용자 point : {}", user.getPoint());
+        } else {
+            paymentStatus = PaymentStatus.FAILED;
+            orderStatus = OrderStatus.ORDER_CREATED;
+        }
+
         Order order = Order.builder()
-                .orderStatus(OrderStatus.ORDER_CREATED)
+                .orderStatus(orderStatus)
                 .paymentMethod(request.paymentMethod())
-                .paymentStatus(PaymentStatus.FAILED)
+                .paymentStatus(paymentStatus)
                 .pointsToUse(request.pointsToUse())
                 .pointsToEarn(request.pointsToEarn())
                 .amount(totalPrice)
@@ -227,6 +248,13 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
+        switch (status) {
+            case DELIVERY_COMPLETED, SHIPPING -> order.setPaymentStatus(PaymentStatus.COMPLETED);
+            default -> {
+                log.error("잘못된 주문 상태 : {}", status);
+                throw CustomException.of(Error.BAD_REQUEST_ERROR);
+            }
+        }
         order.setOrderStatus(status);
         orderRepository.save(order);
     }
