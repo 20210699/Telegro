@@ -33,7 +33,7 @@ import java.util.Map;
 @RequestMapping
 @RequiredArgsConstructor
 @Slf4j
-public class PaymentController implements PaymentControllerDocs{
+public class PaymentController implements PaymentControllerDocs {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private IamportClient iamportClient;
@@ -62,18 +62,18 @@ public class PaymentController implements PaymentControllerDocs{
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
-            order.setOrderNumber(imp_uid);
-            order.setReceiptUrl(payment.getReceiptUrl());
-            orderRepository.save(order);
-
             for (Cart cart : order.getCarts()) {
                 cart.setCartStatus(CartStatus.ORDERED);
             }
 
             switch (payment.getStatus()) {
-                case "ready" -> {return SuccessResponse.of("가상 계좌 발급 완료");}
+                case "ready" -> {
+                    return SuccessResponse.of("가상 계좌 발급 완료");
+                }
 
-                case "paid" -> {return SuccessResponse.of("결제 완료");}
+                case "paid" -> {
+                    return SuccessResponse.of("결제 완료");
+                }
 
                 default -> throw CustomException.of(Error.PAYMENT_STATUS_ERROR);
             }
@@ -94,21 +94,21 @@ public class PaymentController implements PaymentControllerDocs{
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
-        if(!(user.getRole().equals(Role.ADMIN) || user.equals(order.getUser()))) {
+        if (!(user.getRole().equals(Role.ADMIN) || user.equals(order.getUser()))) {
             throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
 
-        if(order.getUser().getCompany() != null) {
-            order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
-            order.setPaymentStatus(PaymentStatus.CANCELLED);
-
-            order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
-            order.getUser().setPoint(order.getUser().getPoint()
-                    .subtract(order.getPointsToEarn())
-                    .add(order.getPointsToUse()));
-        } else {
+        if (order.getUser().getCompany() == null) {
             iamportClient.cancelPaymentByImpUid(new CancelData(order.getOrderNumber(), true));
         }
+
+        order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+        order.setPaymentStatus(PaymentStatus.CANCELLED);
+
+        order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
+        order.getUser().setPoint(order.getUser().getPoint()
+                .subtract(order.getPointsToEarn())
+                .add(order.getPointsToUse()));
 
         return SuccessResponse.of();
     }
@@ -116,48 +116,60 @@ public class PaymentController implements PaymentControllerDocs{
     @Transactional
     @PostMapping("/payments/update")
     public SuccessResponse<?> updatePaymentStatus(WebhookDTO request) throws IamportResponseException, IOException {
-
         Payment payment = iamportClient.paymentByImpUid(request.getImp_uid()).getResponse();
-        log.info("결제 정보 불러오기 : {}", payment);
+        log.info("결제 정보 불러오기 : {}", payment.getCustomData());
 
-        Order order = orderRepository.findByOrderNumber(request.getImp_uid())
-                .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
+        try {
+            var customData = mapper.readValue(payment.getCustomData(), Map.class);
+            Long orderId = Long.valueOf(customData.get("orderId").toString());
 
-        if (request.getStatus() == null || request.getStatus().equals("null")) {
-            order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
-            order.setPaymentStatus(PaymentStatus.FAILED);
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> CustomException.of(Error.ORDER_NOT_FOUND));
 
-            return SuccessResponse.of();
-        }
+            order.setOrderNumber(request.getImp_uid());
+            order.setReceiptUrl(payment.getReceiptUrl());
+            orderRepository.save(order);
+            log.info("결제 검증 완료 및 주문 정보 저장 완료");
 
-        switch (payment.getStatus()) {
-            case "paid" -> {
-                order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
-                order.setPaymentStatus(PaymentStatus.COMPLETED);
-
-                order.getUser().setTotalPrice(order.getAmount().add(order.getUser().getTotalPrice()));
-                order.getUser().setPoint(order.getUser().getPoint()
-                        .subtract(order.getPointsToUse())
-                        .add(order.getPointsToEarn()));
-            }
-            case "ready" -> {
-                order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
-                order.setPaymentStatus(PaymentStatus.PENDING);
-
-                order.getUser().setPoint(order.getUser().getPoint()
-                        .subtract(order.getPointsToUse())
-                        .add(order.getPointsToEarn()));
-            }
-            case "cancelled" -> {
+            if (request.getStatus() == null || request.getStatus().equals("null")) {
                 order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
-                order.setPaymentStatus(PaymentStatus.CANCELLED);
+                order.setPaymentStatus(PaymentStatus.FAILED);
 
-                order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
-                order.getUser().setPoint(order.getUser().getPoint()
-                        .subtract(order.getPointsToEarn())
-                        .add(order.getPointsToUse()));
+                return SuccessResponse.of();
             }
-            default -> throw new IllegalStateException("예상치 못한 결제 상태: " + payment.getStatus());
+
+            switch (payment.getStatus()) {
+                case "paid" -> {
+                    order.setOrderStatus(OrderStatus.PAYMENT_COMPLETED);
+                    order.setPaymentStatus(PaymentStatus.COMPLETED);
+
+                    order.getUser().setTotalPrice(order.getAmount().add(order.getUser().getTotalPrice()));
+                    order.getUser().setPoint(order.getUser().getPoint()
+                            .subtract(order.getPointsToUse())
+                            .add(order.getPointsToEarn()));
+                }
+                case "ready" -> {
+                    order.setOrderStatus(OrderStatus.ORDER_COMPLETED);
+                    order.setPaymentStatus(PaymentStatus.PENDING);
+
+                    order.getUser().setPoint(order.getUser().getPoint()
+                            .subtract(order.getPointsToUse())
+                            .add(order.getPointsToEarn()));
+                }
+                case "cancelled" -> {
+                    order.setOrderStatus(OrderStatus.ORDER_CANCELLED);
+                    order.setPaymentStatus(PaymentStatus.CANCELLED);
+
+                    order.getUser().setTotalPrice(order.getUser().getTotalPrice().subtract(order.getAmount()));
+                    order.getUser().setPoint(order.getUser().getPoint()
+                            .subtract(order.getPointsToEarn())
+                            .add(order.getPointsToUse()));
+                }
+                default -> throw new IllegalStateException("예상치 못한 결제 상태: " + payment.getStatus());
+            }
+        } catch (JsonProcessingException e) {
+            log.error("JSON 파싱 오류 발생: {}", payment.getCustomData(), e);
+            throw CustomException.of(Error.INTERNAL_SERVER_ERROR);
         }
 
         return SuccessResponse.of();
