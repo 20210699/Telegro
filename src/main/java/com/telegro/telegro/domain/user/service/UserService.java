@@ -20,6 +20,7 @@ import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,7 +105,7 @@ public class UserService {
             throw CustomException.of(Error.FORBIDDEN_ACTION_ERROR);
         }
 
-        PageRequest pageRequest = PageRequest.of(page, size);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<User> users;
         if (filteredBy != null) {
             users = userRepository.findByRole(filteredBy, pageRequest);
