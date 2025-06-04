@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -68,7 +69,19 @@ public class PaymentController implements PaymentControllerDocs {
 
             switch (payment.getStatus()) {
                 case "ready" -> {
-                    return SuccessResponse.of("가상 계좌 발급 완료");
+                    try {
+                        Map<String, Object> result = new HashMap<>();
+                        result.put("vbank_name", payment.getVbankName());
+                        result.put("vbank_num", payment.getVbankNum());
+                        result.put("vbank_holder", "서연전자");
+                        result.put("buyer_name", payment.getBuyerName());
+                        result.put("vbank_date", payment.getVbankDate().toString());
+
+                        return SuccessResponse.of(result);
+                    } catch (Exception e) {
+                        log.error("결제 정보 조회 실패: {}", e.getMessage());
+                        throw CustomException.of(Error.INTERNAL_SERVER_ERROR);
+                    }
                 }
 
                 case "paid" -> {
@@ -174,4 +187,5 @@ public class PaymentController implements PaymentControllerDocs {
 
         return SuccessResponse.of();
     }
+
 }
