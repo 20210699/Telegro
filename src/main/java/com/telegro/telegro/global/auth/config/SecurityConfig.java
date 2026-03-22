@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import retrofit2.http.HEAD;
 
 import java.util.List;
 
@@ -56,7 +57,8 @@ public class SecurityConfig {
     configuration.setAllowedOrigins(List.of(
             "http://localhost:5173",
             "https://main.d1gzfbhzmwkdny.amplifyapp.com",
-            "https://www.telegro.kr"
+            "https://www.telegro.kr",
+            "https://telegro.vercel.app"
     ));
 
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
