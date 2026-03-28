@@ -19,7 +19,9 @@ public record NoticeDTO(
         @Schema(description = "게시글 작성일")
         LocalDateTime noticeCreateDate,
         @Schema(description = "게시글 조회수")
-        int viewCount
+        int viewCount,
+        @Schema(description = "게시글 내용")
+        String context
 ) {
     public static NoticeDTO of(Notice notice, int viewCount) {
         String noticeFileName = (notice.getNoticeFiles() != null && !notice.getNoticeFiles().isEmpty()
@@ -33,6 +35,7 @@ public record NoticeDTO(
                 .noticeAuthor(notice.getUser().getUsername())
                 .noticeCreateDate(notice.getCreatedAt())
                 .viewCount(viewCount)
+                .context(notice.getContext())
                 .build();
     }
 }
