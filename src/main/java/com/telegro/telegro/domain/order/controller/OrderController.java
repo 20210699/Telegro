@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -57,8 +58,9 @@ public class OrderController implements OrderControllerDocs{
     }
 
     @GetMapping
-    public SuccessResponse<OrderListDTO> getOrders(Long id, String filteredBy, String query, LocalDate startDate, LocalDate endDate, int page, int size) {
-        return SuccessResponse.of(orderService.getOrders(id, filteredBy, query, startDate, endDate, page, size));
+    public SuccessResponse<OrderListDTO> getOrders(Long id, String filteredBy, String query, LocalDate startDate, LocalDate endDate,
+                                                   OrderStatus orderStatus, LocalDateTime cursorCreatedAt, Long cursorId, int size) {
+        return SuccessResponse.of(orderService.getOrders(id, filteredBy, query, startDate, endDate, orderStatus, cursorCreatedAt, cursorId, size));
     }
 
     @GetMapping("/{orderId}")

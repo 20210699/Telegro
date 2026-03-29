@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface OrderControllerDocs {
@@ -45,7 +46,9 @@ public interface OrderControllerDocs {
                                                    @RequestParam(value = "q", required = false) String query,
                                                    @RequestParam(value = "startDate", required = false) LocalDate startDate,
                                                    @RequestParam(value = "endDate", required = false) LocalDate endDate,
-                                                   @RequestParam(value = "page",defaultValue = "0") int page,
+                                                   @RequestParam(value = "orderStatus", required = false) OrderStatus orderStatus,
+                                                   @RequestParam(value = "cursorCreatedAt", required = false) LocalDateTime cursorCreatedAt,
+                                                   @RequestParam(value = "cursorId", required = false) Long cursorId,
                                                    @RequestParam(value = "size", defaultValue = "10") int size);
 
     @Operation(summary = "주문의 상세 정보를 조회합니다.")
