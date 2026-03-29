@@ -21,7 +21,6 @@ import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -31,6 +30,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -182,34 +182,46 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderListDTO getOrders(Long id, String filteredBy, String query, LocalDate startDate, LocalDate endDate, int page, int size) {
+    public OrderListDTO getOrders(Long id, String filteredBy, String query, LocalDate startDate, LocalDate endDate,
+                                  LocalDateTime cursorCreatedAt, Long cursorId, int size) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        PageRequest pageRequest = PageRequest.of(0, size + 1, Sort.by(
+                Sort.Order.desc("createdAt"),
+                Sort.Order.desc("id")
+        ));
 
         LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
         LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
+        String normalizedQuery = (query == null || query.isBlank()) ? null : query;
 
-        Page<Order> orders;
+        if ((cursorCreatedAt == null) != (cursorId == null)) {
+            throw CustomException.of(Error.BAD_REQUEST_ERROR);
+        }
+
+        List<Order> orders;
         BigDecimal totalPrice;
 
         if ("product".equals(filteredBy)) {
-            orders = orderRepository.findOrdersByProductAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, query, pageRequest);
-            totalPrice = orderRepository.findTotalAmountByProductAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, query);
+            orders = orderRepository.findOrdersByProductAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user,
+                    normalizedQuery, cursorCreatedAt, cursorId, pageRequest);
+            totalPrice = orderRepository.findTotalAmountByProductAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, normalizedQuery);
         } else if ("user".equals(filteredBy)) {
-            orders = orderRepository.findOrdersByUserAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, query, pageRequest);
-            totalPrice = orderRepository.findTotalAmountByUserAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, query);
+            orders = orderRepository.findOrdersByUserAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user,
+                    normalizedQuery, cursorCreatedAt, cursorId, pageRequest);
+            totalPrice = orderRepository.findTotalAmountByUserAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, normalizedQuery);
         } else {
-            orders = orderRepository.findOrdersByDateRangeAndUser(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, pageRequest);
+            orders = orderRepository.findOrdersByDateRangeAndUser(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user,
+                    cursorCreatedAt, cursorId, pageRequest);
             totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user);
         }
 
-        boolean isLast = orders.isLast();
-        int totalPage = orders.getTotalPages();
-        long totalElement = orders.getTotalElements();
+        boolean isLast = orders.size() <= size;
+        List<Order> pagedOrders = isLast ? orders : new ArrayList<>(orders.subList(0, size));
+        Order nextCursorOrder = isLast ? null : pagedOrders.get(pagedOrders.size() - 1);
 
-        List<OrderDetailDTO> orderDTOs = orders.getContent().stream()
+        List<OrderDetailDTO> orderDTOs = pagedOrders.stream()
                 .map(order -> {
                     List<CartProductDTO> products = order.getCarts().stream()
                             .map(CartProductDTO::of)
@@ -229,8 +241,8 @@ public class OrderService {
 
         return OrderListDTO.builder()
                 .isLast(isLast)
-                .totalPage(totalPage)
-                .totalElement(totalElement)
+                .nextCursorCreatedAt(nextCursorOrder != null ? nextCursorOrder.getCreatedAt() : null)
+                .nextCursorId(nextCursorOrder != null ? nextCursorOrder.getId() : null)
                 .totalPrice(totalPrice)
                 .orders(orderDTOs)
                 .build();
