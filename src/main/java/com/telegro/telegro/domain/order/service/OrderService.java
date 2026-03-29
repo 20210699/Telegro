@@ -22,7 +22,6 @@ import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -183,13 +182,13 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public OrderListDTO getOrders(Long id, String filteredBy, String query, LocalDate startDate, LocalDate endDate,
-                                  LocalDateTime cursorCreatedAt, Long cursorId, int size) {
+                                  OrderStatus orderStatus, LocalDateTime cursorCreatedAt, Long cursorId, int size) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
-        PageRequest pageRequest = PageRequest.of(0, size + 1, Sort.by(
-                Sort.Order.desc("createdAt"),
-                Sort.Order.desc("id")
+        PageRequest pageRequest = PageRequest.of(0, size + 1, org.springframework.data.domain.Sort.by(
+                org.springframework.data.domain.Sort.Order.desc("createdAt"),
+                org.springframework.data.domain.Sort.Order.desc("id")
         ));
 
         LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
@@ -205,16 +204,16 @@ public class OrderService {
 
         if ("product".equals(filteredBy)) {
             orders = orderRepository.findOrdersByProductAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user,
-                    normalizedQuery, cursorCreatedAt, cursorId, pageRequest);
-            totalPrice = orderRepository.findTotalAmountByProductAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, normalizedQuery);
+                    normalizedQuery, orderStatus, cursorCreatedAt, cursorId, pageRequest);
+            totalPrice = orderRepository.findTotalAmountByProductAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, normalizedQuery, orderStatus);
         } else if ("user".equals(filteredBy)) {
             orders = orderRepository.findOrdersByUserAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user,
-                    normalizedQuery, cursorCreatedAt, cursorId, pageRequest);
-            totalPrice = orderRepository.findTotalAmountByUserAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, normalizedQuery);
+                    normalizedQuery, orderStatus, cursorCreatedAt, cursorId, pageRequest);
+            totalPrice = orderRepository.findTotalAmountByUserAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, normalizedQuery, orderStatus);
         } else {
             orders = orderRepository.findOrdersByDateRangeAndUser(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user,
-                    cursorCreatedAt, cursorId, pageRequest);
-            totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user);
+                    orderStatus, cursorCreatedAt, cursorId, pageRequest);
+            totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, orderStatus);
         }
 
         boolean isLast = orders.size() <= size;

@@ -46,6 +46,7 @@ public interface OrderControllerDocs {
                                                    @RequestParam(value = "q", required = false) String query,
                                                    @RequestParam(value = "startDate", required = false) LocalDate startDate,
                                                    @RequestParam(value = "endDate", required = false) LocalDate endDate,
+                                                   @RequestParam(value = "orderStatus", required = false) OrderStatus orderStatus,
                                                    @RequestParam(value = "cursorCreatedAt", required = false) LocalDateTime cursorCreatedAt,
                                                    @RequestParam(value = "cursorId", required = false) Long cursorId,
                                                    @RequestParam(value = "size", defaultValue = "10") int size);
