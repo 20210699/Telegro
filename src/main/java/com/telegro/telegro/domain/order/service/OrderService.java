@@ -19,6 +19,7 @@ import com.telegro.telegro.domain.user.repository.DeliveryAddressRepository;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
+import com.telegro.telegro.global.apiPayLoad.response.CursorPagedResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -186,6 +187,10 @@ public class OrderService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
+        if (size < 1) {
+            throw CustomException.of(Error.BAD_REQUEST_ERROR);
+        }
+
         PageRequest pageRequest = PageRequest.of(0, size + 1, org.springframework.data.domain.Sort.by(
                 org.springframework.data.domain.Sort.Order.desc("createdAt"),
                 org.springframework.data.domain.Sort.Order.desc("id")
@@ -238,13 +243,18 @@ public class OrderService {
                 })
                 .toList();
 
-        return OrderListDTO.builder()
-                .isLast(isLast)
-                .nextCursorCreatedAt(nextCursorOrder != null ? nextCursorOrder.getCreatedAt() : null)
-                .nextCursorId(nextCursorOrder != null ? nextCursorOrder.getId() : null)
-                .totalPrice(totalPrice)
-                .orders(orderDTOs)
-                .build();
+        return new OrderListDTO(
+                totalPrice,
+                CursorPagedResponse.of(
+                        !isLast,
+                        CursorPagedResponse.cursorOf(
+                                nextCursorOrder != null ? nextCursorOrder.getId() : null,
+                                nextCursorOrder != null ? nextCursorOrder.getCreatedAt() : null
+                        ),
+                        null,
+                        orderDTOs
+                )
+        );
     }
 
     @Transactional
