@@ -4,7 +4,6 @@ import com.telegro.telegro.domain.cart.repository.CartRepository;
 import com.telegro.telegro.domain.product.dto.request.ProductRequestDTO;
 import com.telegro.telegro.domain.product.dto.response.CreatedProductDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
-import com.telegro.telegro.domain.product.dto.response.ProductListDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductResponseDTO;
 import com.telegro.telegro.domain.product.entity.Product;
 import com.telegro.telegro.domain.product.entity.enums.Category;
@@ -14,15 +13,17 @@ import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
+import com.telegro.telegro.global.apiPayLoad.response.CursorPagedResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -72,8 +73,8 @@ public class ProductService {
                 .id(savedProduct.getId()).build();
     }
 
-    @Transactional
-    public ProductListDTO getProducts(Long id, Category category, int page, int size) {
+    @Transactional(readOnly = true)
+    public CursorPagedResponse<ProductResponseDTO> getProducts(Long id, Category category, LocalDateTime cursorCreatedAt, Long cursorId, int size) {
 
         final User user;
         if (id != null) {
@@ -82,23 +83,40 @@ public class ProductService {
             user = null;
         }
 
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Product> products = productRepository.findByCategory(category, pageRequest);
+        if ((cursorCreatedAt == null) != (cursorId == null)) {
+            throw CustomException.of(Error.BAD_REQUEST_ERROR);
+        }
+        if (size < 1) {
+            throw CustomException.of(Error.BAD_REQUEST_ERROR);
+        }
 
-        // Product를 ProductResponseDTO로 변환
-        List<ProductResponseDTO> productDTOs = products.stream()
+        PageRequest pageRequest = PageRequest.of(0, size + 1, Sort.by(
+                Sort.Order.desc("createdAt"),
+                Sort.Order.desc("id")
+        ));
+        List<Product> products = productRepository.findByCategoryWithCursor(category, cursorCreatedAt, cursorId, pageRequest);
+        long totalElements = productRepository.countByCategory(category);
+
+        boolean isLast = products.size() <= size;
+        List<Product> pagedProducts = isLast ? products : new ArrayList<>(products.subList(0, size));
+        Product nextCursorProduct = isLast ? null : pagedProducts.get(pagedProducts.size() - 1);
+
+        List<ProductResponseDTO> productDTOs = pagedProducts.stream()
                 .map(product -> {
                     BigDecimal price = selectPriceByUserRole(product, user);
                     return ProductResponseDTO.of(product, price.toString());
                 })
                 .toList();
 
-        return ProductListDTO.builder()
-                .isLast(products.isLast())
-                .totalElement(products.getTotalElements())
-                .totalPage(products.getTotalPages())
-                .products(productDTOs)
-                .build();
+        return CursorPagedResponse.of(
+                !isLast,
+                CursorPagedResponse.cursorOf(
+                        nextCursorProduct != null ? nextCursorProduct.getId() : null,
+                        nextCursorProduct != null ? nextCursorProduct.getCreatedAt() : null
+                ),
+                totalElements,
+                productDTOs
+        );
     }
 
     @Transactional

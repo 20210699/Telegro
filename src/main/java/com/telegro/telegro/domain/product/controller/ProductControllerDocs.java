@@ -3,8 +3,9 @@ package com.telegro.telegro.domain.product.controller;
 import com.telegro.telegro.domain.product.dto.request.ProductRequestDTO;
 import com.telegro.telegro.domain.product.dto.response.CreatedProductDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
-import com.telegro.telegro.domain.product.dto.response.ProductListDTO;
+import com.telegro.telegro.domain.product.dto.response.ProductResponseDTO;
 import com.telegro.telegro.domain.product.entity.enums.Category;
+import com.telegro.telegro.global.apiPayLoad.response.CursorPagedResponse;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 public interface ProductControllerDocs {
@@ -22,10 +24,11 @@ public interface ProductControllerDocs {
 
     @Operation(description = "상품 목록을 조회합니다.")
     @ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
-    public SuccessResponse<ProductListDTO> getProducts(
+    public SuccessResponse<CursorPagedResponse<ProductResponseDTO>> getProducts(
             @LoginInfo Long id,
             @RequestParam(value = "category") Category category,
-            @RequestParam(value = "page") int page,
+            @RequestParam(value = "cursorCreatedAt", required = false) LocalDateTime cursorCreatedAt,
+            @RequestParam(value = "cursorId", required = false) Long cursorId,
             @RequestParam(value = "size") int size);
 
     @Operation(description = "상품을 상세 조회합니다.")

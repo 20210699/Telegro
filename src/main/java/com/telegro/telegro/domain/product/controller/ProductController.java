@@ -3,13 +3,16 @@ package com.telegro.telegro.domain.product.controller;
 import com.telegro.telegro.domain.product.dto.request.ProductRequestDTO;
 import com.telegro.telegro.domain.product.dto.response.CreatedProductDTO;
 import com.telegro.telegro.domain.product.dto.response.ProductDetailResponseDTO;
-import com.telegro.telegro.domain.product.dto.response.ProductListDTO;
+import com.telegro.telegro.domain.product.dto.response.ProductResponseDTO;
 import com.telegro.telegro.domain.product.entity.enums.Category;
 import com.telegro.telegro.domain.product.service.ProductService;
+import com.telegro.telegro.global.apiPayLoad.response.CursorPagedResponse;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
+import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
@@ -19,8 +22,13 @@ public class ProductController implements ProductControllerDocs{
     private final ProductService productService;
 
     @GetMapping("/products")
-    public SuccessResponse<ProductListDTO> getProducts(Long id, Category category, int page, int size) {
-        return SuccessResponse.of(productService.getProducts(id, category, page, size));
+    public SuccessResponse<CursorPagedResponse<ProductResponseDTO>> getProducts(
+            @LoginInfo Long id,
+            @RequestParam Category category,
+            @RequestParam(required = false) LocalDateTime cursorCreatedAt,
+            @RequestParam(required = false) Long cursorId,
+            @RequestParam int size) {
+        return SuccessResponse.of(productService.getProducts(id, category, cursorCreatedAt, cursorId, size));
     }
 
     @GetMapping("/products/{productId}")
