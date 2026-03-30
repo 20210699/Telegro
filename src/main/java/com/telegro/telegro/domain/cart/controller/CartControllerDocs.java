@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDateTime;
+
 public interface CartControllerDocs {
     @Operation(description = "장바구니에 상품을 등록합니다.")
     @ApiResponse(responseCode = "200", description = "장바구니 담기 성공")
@@ -18,7 +20,11 @@ public interface CartControllerDocs {
 
     @Operation(description = "장바구니에 상품을 조회합니다.")
     @ApiResponse(responseCode = "200", description = "장바구니 조회 성공")
-    public SuccessResponse<CartListDTO> getCartItems(@LoginInfo Long id, @RequestParam(value = "page") int page, @RequestParam(value = "size") int size);
+    public SuccessResponse<CartListDTO> getCartItems(
+            @LoginInfo Long id,
+            @RequestParam(value = "cursorCreatedAt", required = false) LocalDateTime cursorCreatedAt,
+            @RequestParam(value = "cursorId", required = false) Long cursorId,
+            @RequestParam(value = "size", defaultValue = "10") int size);
 
     @Operation(description = "장바구니에 상품을 삭제합니다.")
     @ApiResponse(responseCode = "200", description = "장바구니 삭제 성공")

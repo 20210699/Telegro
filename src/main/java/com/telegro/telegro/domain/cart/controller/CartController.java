@@ -8,6 +8,8 @@ import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/api/carts")
 @RequiredArgsConstructor
@@ -20,8 +22,8 @@ public class CartController implements CartControllerDocs {
     }
 
     @GetMapping
-    public SuccessResponse<CartListDTO> getCartItems(Long id, int page, int size) {
-        return SuccessResponse.of(cartService.getCartItems(id, page, size));
+    public SuccessResponse<CartListDTO> getCartItems(Long id, LocalDateTime cursorCreatedAt, Long cursorId, int size) {
+        return SuccessResponse.of(cartService.getCartItems(id, cursorCreatedAt, cursorId, size));
     }
 
     @DeleteMapping("/{cartId}")

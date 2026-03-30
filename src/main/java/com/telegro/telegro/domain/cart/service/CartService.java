@@ -14,14 +14,17 @@ import com.telegro.telegro.domain.user.entity.User;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
+import com.telegro.telegro.global.apiPayLoad.response.CursorPagedResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -80,32 +83,49 @@ public class CartService {
                 .build();
     }
 
-    @Transactional
-    public CartListDTO getCartItems(Long id, int page, int size) {
+    @Transactional(readOnly = true)
+    public CartListDTO getCartItems(Long id, LocalDateTime cursorCreatedAt, Long cursorId, int size) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
 
-        PageRequest pageRequest = PageRequest.of(page, size);
+        if ((cursorCreatedAt == null) != (cursorId == null)) {
+            throw CustomException.of(Error.BAD_REQUEST_ERROR);
+        }
+        if (size < 1) {
+            throw CustomException.of(Error.BAD_REQUEST_ERROR);
+        }
 
-        Page<Cart> carts = cartRepository.findAllInCartByUser(user, pageRequest);
-        boolean isLast = carts.isLast();
-        int totalPage = carts.getTotalPages();
-        long totalElement = carts.getTotalElements();
+        PageRequest pageRequest = PageRequest.of(0, size + 1, Sort.by(
+                Sort.Order.desc("createdAt"),
+                Sort.Order.desc("id")
+        ));
 
-        List<CartResponseDTO> cartDTOs = carts.getContent().stream()
+        List<Cart> carts = cartRepository.findAllInCartByUserWithCursor(user, cursorCreatedAt, cursorId, pageRequest);
+        long totalElements = cartRepository.countByUserAndCartStatus(user, CartStatus.IN_CART);
+
+        boolean isLast = carts.size() <= size;
+        List<Cart> pagedCarts = isLast ? carts : new ArrayList<>(carts.subList(0, size));
+        Cart nextCursorCart = isLast ? null : pagedCarts.get(pagedCarts.size() - 1);
+
+        List<CartResponseDTO> cartDTOs = pagedCarts.stream()
                 .map(CartResponseDTO::of).toList();
 
         BigDecimal totalPrice = cartDTOs.stream()
                 .map(cartDTO -> cartDTO.productPrice().multiply(BigDecimal.valueOf(cartDTO.quantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return CartListDTO.builder()
-                .isLast(isLast)
-                .totalPage(totalPage)
-                .totalElement(totalElement)
-                .totalPrice(totalPrice)
-                .carts(cartDTOs)
-                .build();
+        return new CartListDTO(
+                totalPrice,
+                CursorPagedResponse.of(
+                        !isLast,
+                        CursorPagedResponse.cursorOf(
+                                nextCursorCart != null ? nextCursorCart.getId() : null,
+                                nextCursorCart != null ? nextCursorCart.getCreatedAt() : null
+                        ),
+                        totalElements,
+                        cartDTOs
+                )
+        );
     }
 
     @Transactional
