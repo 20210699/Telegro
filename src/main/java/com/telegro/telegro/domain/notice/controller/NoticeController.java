@@ -1,13 +1,16 @@
 package com.telegro.telegro.domain.notice.controller;
 
 import com.telegro.telegro.domain.notice.dto.response.CreatedNoticeDTO;
+import com.telegro.telegro.domain.notice.dto.response.NoticeDTO;
 import com.telegro.telegro.domain.notice.dto.response.NoticeDetailDTO;
-import com.telegro.telegro.domain.notice.dto.response.NoticeListDTO;
 import com.telegro.telegro.domain.notice.entity.Notice;
 import com.telegro.telegro.domain.notice.service.NoticeService;
+import com.telegro.telegro.global.apiPayLoad.response.CursorPagedResponse;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping
@@ -21,8 +24,8 @@ public class NoticeController implements NoticeControllerDocs {
     }
 
     @GetMapping("/notices")
-    public SuccessResponse<NoticeListDTO> getNotices(int page, int size) {
-        return SuccessResponse.of(noticeService.getNotices(page,size));
+    public SuccessResponse<CursorPagedResponse<NoticeDTO>> getNotices(LocalDateTime cursorCreatedAt, Long cursorId, int size) {
+        return SuccessResponse.of(noticeService.getNotices(cursorCreatedAt, cursorId, size));
     }
 
     @GetMapping("/notices/{noticeId}")

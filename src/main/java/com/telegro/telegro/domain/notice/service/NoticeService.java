@@ -10,15 +10,17 @@ import com.telegro.telegro.domain.user.entity.enums.Role;
 import com.telegro.telegro.domain.user.repository.UserRepository;
 import com.telegro.telegro.global.apiPayLoad.exception.CustomException;
 import com.telegro.telegro.global.apiPayLoad.exception.Error;
+import com.telegro.telegro.global.apiPayLoad.response.CursorPagedResponse;
 import com.telegro.telegro.global.common.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -57,23 +59,38 @@ public class NoticeService {
         return CreatedNoticeDTO.builder().id(savedNotice.getId()).build();
     }
 
-    @Transactional
-    public NoticeListDTO getNotices(int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Notice> notices = noticeRepository.findAll(pageRequest);
-        boolean isLast = notices.isLast();
-        int totalPage = notices.getTotalPages();
-        long totalElement = notices.getTotalElements();
+    @Transactional(readOnly = true)
+    public CursorPagedResponse<NoticeDTO> getNotices(LocalDateTime cursorCreatedAt, Long cursorId, int size) {
+        if ((cursorCreatedAt == null) != (cursorId == null)) {
+            throw CustomException.of(Error.BAD_REQUEST_ERROR);
+        }
+        if (size < 1) {
+            throw CustomException.of(Error.BAD_REQUEST_ERROR);
+        }
 
-        List<NoticeDTO> noticeDTOS = notices.getContent().stream()
+        PageRequest pageRequest = PageRequest.of(0, size + 1, Sort.by(
+                Sort.Order.desc("createdAt"),
+                Sort.Order.desc("id")
+        ));
+        List<Notice> notices = noticeRepository.findNoticesWithCursor(cursorCreatedAt, cursorId, pageRequest);
+        long totalElements = noticeRepository.count();
+
+        boolean isLast = notices.size() <= size;
+        List<Notice> pagedNotices = isLast ? notices : new ArrayList<>(notices.subList(0, size));
+        Notice nextCursorNotice = isLast ? null : pagedNotices.get(pagedNotices.size() - 1);
+
+        List<NoticeDTO> noticeDTOS = pagedNotices.stream()
                 .map(notice -> NoticeDTO.of(notice, notice.getViewCount())).toList();
 
-        return NoticeListDTO.builder()
-                .isLast(isLast)
-                .totalPage(totalPage)
-                .totalElement(totalElement)
-                .notices(noticeDTOS)
-                .build();
+        return CursorPagedResponse.of(
+                !isLast,
+                CursorPagedResponse.cursorOf(
+                        nextCursorNotice != null ? nextCursorNotice.getId() : null,
+                        nextCursorNotice != null ? nextCursorNotice.getCreatedAt() : null
+                ),
+                totalElements,
+                noticeDTOS
+        );
     }
 
     @Transactional
