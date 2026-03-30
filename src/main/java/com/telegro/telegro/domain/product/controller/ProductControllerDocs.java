@@ -29,7 +29,7 @@ public interface ProductControllerDocs {
             @RequestParam(value = "category") Category category,
             @RequestParam(value = "cursorCreatedAt", required = false) LocalDateTime cursorCreatedAt,
             @RequestParam(value = "cursorId", required = false) Long cursorId,
-            @RequestParam(value = "size") int size);
+            @RequestParam(value = "size", defaultValue = "10") int size);
 
     @Operation(description = "상품을 상세 조회합니다.")
     @ApiResponse(responseCode = "200", description = "상품 조회 성공")

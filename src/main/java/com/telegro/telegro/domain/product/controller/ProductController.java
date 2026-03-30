@@ -8,7 +8,6 @@ import com.telegro.telegro.domain.product.entity.enums.Category;
 import com.telegro.telegro.domain.product.service.ProductService;
 import com.telegro.telegro.global.apiPayLoad.response.CursorPagedResponse;
 import com.telegro.telegro.global.apiPayLoad.response.SuccessResponse;
-import com.telegro.telegro.global.auth.annotation.LoginInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,17 +21,12 @@ public class ProductController implements ProductControllerDocs{
     private final ProductService productService;
 
     @GetMapping("/products")
-    public SuccessResponse<CursorPagedResponse<ProductResponseDTO>> getProducts(
-            @LoginInfo Long id,
-            @RequestParam Category category,
-            @RequestParam(required = false) LocalDateTime cursorCreatedAt,
-            @RequestParam(required = false) Long cursorId,
-            @RequestParam int size) {
+    public SuccessResponse<CursorPagedResponse<ProductResponseDTO>> getProducts(Long id, Category category, LocalDateTime cursorCreatedAt, Long cursorId, int size) {
         return SuccessResponse.of(productService.getProducts(id, category, cursorCreatedAt, cursorId, size));
     }
 
     @GetMapping("/products/{productId}")
-    public SuccessResponse<ProductDetailResponseDTO> getProductDetail(Long id, @PathVariable Long productId) {
+    public SuccessResponse<ProductDetailResponseDTO> getProductDetail(Long id, Long productId) {
         return SuccessResponse.of(productService.getProductDetail(id, productId));
     }
 
