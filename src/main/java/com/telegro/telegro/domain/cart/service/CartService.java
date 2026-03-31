@@ -101,7 +101,6 @@ public class CartService {
         ));
 
         List<Cart> carts = cartRepository.findAllInCartByUserWithCursor(user, cursorCreatedAt, cursorId, pageRequest);
-        long totalElements = cartRepository.countByUserAndCartStatus(user, CartStatus.IN_CART);
 
         boolean isLast = carts.size() <= size;
         List<Cart> pagedCarts = isLast ? carts : new ArrayList<>(carts.subList(0, size));
@@ -122,7 +121,6 @@ public class CartService {
                                 nextCursorCart != null ? nextCursorCart.getId() : null,
                                 nextCursorCart != null ? nextCursorCart.getCreatedAt() : null
                         ),
-                        totalElements,
                         cartDTOs
                 )
         );

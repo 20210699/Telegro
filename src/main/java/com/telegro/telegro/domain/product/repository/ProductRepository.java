@@ -21,6 +21,4 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("cursorId") Long cursorId,
             Pageable pageable
     );
-
-    long countByCategory(Category category);
 }

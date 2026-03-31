@@ -197,10 +197,6 @@ public class OrderService {
                 org.springframework.data.domain.Sort.Order.desc("id")
         ));
 
-        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
-        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
-        String normalizedQuery = (query == null || query.isBlank()) ? null : query;
-
         if ((cursorCreatedAt == null) != (cursorId == null)) {
             throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
@@ -220,7 +216,6 @@ public class OrderService {
                                 nextCursorOrder != null ? nextCursorOrder.getId() : null,
                                 nextCursorOrder != null ? nextCursorOrder.getCreatedAt() : null
                         ),
-                        null,
                         orderDTOs
                 ))
                 .build();

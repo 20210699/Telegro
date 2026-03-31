@@ -73,7 +73,6 @@ public class NoticeService {
                 Sort.Order.desc("id")
         ));
         List<Notice> notices = noticeRepository.findNoticesWithCursor(cursorCreatedAt, cursorId, pageRequest);
-        long totalElements = noticeRepository.count();
 
         boolean isLast = notices.size() <= size;
         List<Notice> pagedNotices = isLast ? notices : new ArrayList<>(notices.subList(0, size));
@@ -88,7 +87,6 @@ public class NoticeService {
                         nextCursorNotice != null ? nextCursorNotice.getId() : null,
                         nextCursorNotice != null ? nextCursorNotice.getCreatedAt() : null
                 ),
-                totalElements,
                 noticeDTOS
         );
     }
