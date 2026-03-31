@@ -3,6 +3,7 @@ package com.telegro.telegro.domain.order.controller;
 import com.telegro.telegro.domain.cart.entity.Cart;
 import com.telegro.telegro.domain.order.dto.request.OrderRequestDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderDetailResponseDTO;
+import com.telegro.telegro.domain.order.dto.response.OrderFullListDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderListDTO;
 import com.telegro.telegro.domain.order.dto.response.OrderResponseDTO;
 import com.telegro.telegro.domain.order.dto.response.temporaryOrderDTO;
@@ -61,6 +62,12 @@ public class OrderController implements OrderControllerDocs{
     public SuccessResponse<OrderListDTO> getOrders(Long id, String filteredBy, String query, LocalDate startDate, LocalDate endDate,
                                                    OrderStatus orderStatus, LocalDateTime cursorCreatedAt, Long cursorId, int size) {
         return SuccessResponse.of(orderService.getOrders(id, filteredBy, query, startDate, endDate, orderStatus, cursorCreatedAt, cursorId, size));
+    }
+
+    @GetMapping("/all")
+    public SuccessResponse<OrderFullListDTO> getAllOrders(Long id, String filterBy, String query, LocalDate startDate,
+                                                          LocalDate endDate, OrderStatus orderStatus) {
+        return SuccessResponse.of(orderService.getAllOrders(id, filterBy, query, startDate, endDate, orderStatus));
     }
 
     @GetMapping("/{orderId}")

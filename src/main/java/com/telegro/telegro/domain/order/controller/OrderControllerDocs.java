@@ -51,6 +51,18 @@ public interface OrderControllerDocs {
                                                    @RequestParam(value = "cursorId", required = false) Long cursorId,
                                                    @RequestParam(value = "size", defaultValue = "10") int size);
 
+    @Operation(summary = "검색 조건에 따른 주문 목록 전체를 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "주문 목록 전체 조회 성공")
+    public SuccessResponse<OrderFullListDTO> getAllOrders(@LoginInfo Long id,
+                                                          @RequestParam(value = "filterBy", required = false) @Parameter(description = "필터",
+                                                                  examples =
+                                                                          {@ExampleObject(name = "상품명", value = "product"),
+                                                                                  @ExampleObject(name = "주문자명", value = "user")}) String filterBy,
+                                                          @RequestParam(value = "q", required = false) String query,
+                                                          @RequestParam(value = "startDate", required = false) LocalDate startDate,
+                                                          @RequestParam(value = "endDate", required = false) LocalDate endDate,
+                                                          @RequestParam(value = "orderStatus", required = false) OrderStatus orderStatus);
+
     @Operation(summary = "주문의 상세 정보를 조회합니다.")
     @ApiResponse(responseCode = "200", description = "주문 상세 조회 성공")
     public SuccessResponse<OrderDetailResponseDTO> getOrderDetail(@LoginInfo Long id, @PathVariable Long orderId);

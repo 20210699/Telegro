@@ -1,13 +1,14 @@
 package com.telegro.telegro.domain.order.dto.response;
 
-import com.telegro.telegro.global.apiPayLoad.response.CursorPagedResponse;
 import lombok.Builder;
+import lombok.Getter;
 
 import java.math.BigDecimal;
-
+import java.util.List;
+@Getter
 @Builder
-public record OrderListDTO(
+public record OrderFullListDTO(
         BigDecimal totalPrice,
-        CursorPagedResponse<OrderDetailDTO> orders
+        List<OrderDetailDTO> orders
 ) {
 }
