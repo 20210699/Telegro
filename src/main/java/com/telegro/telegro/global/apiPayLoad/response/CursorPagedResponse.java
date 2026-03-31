@@ -1,5 +1,7 @@
 package com.telegro.telegro.global.apiPayLoad.response;
 
+import retrofit2.http.HEAD;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
