@@ -22,6 +22,7 @@ import com.telegro.telegro.global.apiPayLoad.exception.Error;
 import com.telegro.telegro.global.apiPayLoad.response.CursorPagedResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -196,36 +197,74 @@ public class OrderService {
                 org.springframework.data.domain.Sort.Order.desc("id")
         ));
 
-        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
-        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
-        String normalizedQuery = (query == null || query.isBlank()) ? null : query;
-
         if ((cursorCreatedAt == null) != (cursorId == null)) {
             throw CustomException.of(Error.BAD_REQUEST_ERROR);
         }
+
+        OrderSearchResult searchResult = searchOrders(user, filteredBy, query, startDate, endDate, orderStatus, cursorCreatedAt, cursorId, pageRequest);
+
+        boolean isLast = searchResult.orders().size() <= size;
+        List<Order> pagedOrders = isLast ? searchResult.orders() : new ArrayList<>(searchResult.orders().subList(0, size));
+        Order nextCursorOrder = isLast ? null : pagedOrders.get(pagedOrders.size() - 1);
+        List<OrderDetailDTO> orderDTOs = toOrderDetailDTOs(pagedOrders);
+
+        return OrderListDTO.builder()
+                .totalPrice(searchResult.totalPrice())
+                .orders(CursorPagedResponse.of(
+                        !isLast,
+                        CursorPagedResponse.cursorOf(
+                                nextCursorOrder != null ? nextCursorOrder.getId() : null,
+                                nextCursorOrder != null ? nextCursorOrder.getCreatedAt() : null
+                        ),
+                        orderDTOs
+                ))
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public OrderFullListDTO getAllOrders(Long id, String filteredBy, String query, LocalDate startDate,
+                                         LocalDate endDate, OrderStatus orderStatus) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.of(Error.USER_NOT_FOUND));
+
+        OrderSearchResult searchResult = searchOrders(user, filteredBy, query, startDate, endDate, orderStatus,
+                null, null, Pageable.unpaged());
+
+        return OrderFullListDTO.builder()
+                .totalPrice(searchResult.totalPrice())
+                .orders(toOrderDetailDTOs(searchResult.orders()))
+                .build();
+    }
+
+    private OrderSearchResult searchOrders(User user, String filteredBy, String query, LocalDate startDate, LocalDate endDate,
+                                           OrderStatus orderStatus, LocalDateTime cursorCreatedAt, Long cursorId, Pageable pageable) {
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
+        String normalizedQuery = (query == null || query.isBlank()) ? null : query;
+        User targetUser = user.getRole().equals(Role.ADMIN) ? null : user;
 
         List<Order> orders;
         BigDecimal totalPrice;
 
         if ("product".equals(filteredBy)) {
-            orders = orderRepository.findOrdersByProductAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user,
-                    normalizedQuery, orderStatus, cursorCreatedAt, cursorId, pageRequest);
-            totalPrice = orderRepository.findTotalAmountByProductAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, normalizedQuery, orderStatus);
+            orders = orderRepository.findOrdersByProductAndQuery(startDateTime, endDateTime, targetUser,
+                    normalizedQuery, orderStatus, cursorCreatedAt, cursorId, pageable);
+            totalPrice = orderRepository.findTotalAmountByProductAndQuery(startDateTime, endDateTime, targetUser, normalizedQuery, orderStatus);
         } else if ("user".equals(filteredBy)) {
-            orders = orderRepository.findOrdersByUserAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user,
-                    normalizedQuery, orderStatus, cursorCreatedAt, cursorId, pageRequest);
-            totalPrice = orderRepository.findTotalAmountByUserAndQuery(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, normalizedQuery, orderStatus);
+            orders = orderRepository.findOrdersByUserAndQuery(startDateTime, endDateTime, targetUser,
+                    normalizedQuery, orderStatus, cursorCreatedAt, cursorId, pageable);
+            totalPrice = orderRepository.findTotalAmountByUserAndQuery(startDateTime, endDateTime, targetUser, normalizedQuery, orderStatus);
         } else {
-            orders = orderRepository.findOrdersByDateRangeAndUser(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user,
-                    orderStatus, cursorCreatedAt, cursorId, pageRequest);
-            totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(startDateTime, endDateTime, user.getRole().equals(Role.ADMIN) ? null : user, orderStatus);
+            orders = orderRepository.findOrdersByDateRangeAndUser(startDateTime, endDateTime, targetUser,
+                    orderStatus, cursorCreatedAt, cursorId, pageable);
+            totalPrice = orderRepository.findTotalAmountByDateRangeAndUser(startDateTime, endDateTime, targetUser, orderStatus);
         }
 
-        boolean isLast = orders.size() <= size;
-        List<Order> pagedOrders = isLast ? orders : new ArrayList<>(orders.subList(0, size));
-        Order nextCursorOrder = isLast ? null : pagedOrders.get(pagedOrders.size() - 1);
+        return new OrderSearchResult(orders, totalPrice);
+    }
 
-        List<OrderDetailDTO> orderDTOs = pagedOrders.stream()
+    private List<OrderDetailDTO> toOrderDetailDTOs(List<Order> orders) {
+        return orders.stream()
                 .map(order -> {
                     List<CartProductDTO> products = order.getCarts().stream()
                             .map(CartProductDTO::of)
@@ -242,19 +281,12 @@ public class OrderService {
                     return OrderDetailDTO.of(order, products, userDTO);
                 })
                 .toList();
+    }
 
-        return new OrderListDTO(
-                totalPrice,
-                CursorPagedResponse.of(
-                        !isLast,
-                        CursorPagedResponse.cursorOf(
-                                nextCursorOrder != null ? nextCursorOrder.getId() : null,
-                                nextCursorOrder != null ? nextCursorOrder.getCreatedAt() : null
-                        ),
-                        null,
-                        orderDTOs
-                )
-        );
+    private record OrderSearchResult(
+            List<Order> orders,
+            BigDecimal totalPrice
+    ) {
     }
 
     @Transactional

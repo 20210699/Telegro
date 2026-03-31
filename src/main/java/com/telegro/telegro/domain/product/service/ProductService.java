@@ -95,7 +95,6 @@ public class ProductService {
                 Sort.Order.desc("id")
         ));
         List<Product> products = productRepository.findByCategoryWithCursor(category, cursorCreatedAt, cursorId, pageRequest);
-        long totalElements = productRepository.countByCategory(category);
 
         boolean isLast = products.size() <= size;
         List<Product> pagedProducts = isLast ? products : new ArrayList<>(products.subList(0, size));
@@ -114,7 +113,6 @@ public class ProductService {
                         nextCursorProduct != null ? nextCursorProduct.getId() : null,
                         nextCursorProduct != null ? nextCursorProduct.getCreatedAt() : null
                 ),
-                totalElements,
                 productDTOs
         );
     }
