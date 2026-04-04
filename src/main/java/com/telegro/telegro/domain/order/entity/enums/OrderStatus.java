@@ -7,6 +7,9 @@ public enum OrderStatus {
     @Schema(description = "주문이 생성된 상태")
     ORDER_CREATED,
 
+    @Schema(description = "주문이 만료된 상태")
+    ORDER_EXPIRED,
+
     @Schema(description = "주문이 접수된 상태")
     ORDER_COMPLETED,
 
