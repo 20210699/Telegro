@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,10 +39,31 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class OrderService {
+    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Seoul");
+
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final DeliveryAddressRepository deliveryAddressRepository;
+
+    @Transactional
+    public int expireOrderCreatedOrders() {
+        LocalDateTime threshold = LocalDate.now(BUSINESS_ZONE).atStartOfDay();
+        List<Order> expiredOrders = orderRepository.findAllByOrderStatusAndCreatedAtBefore(
+                OrderStatus.ORDER_CREATED,
+                threshold
+        );
+
+        if (expiredOrders.isEmpty()) {
+            return 0;
+        }
+
+        expiredOrders.forEach(order -> order.setOrderStatus(OrderStatus.ORDER_EXPIRED));
+        orderRepository.saveAll(expiredOrders);
+
+        log.info("만료 처리된 ORDER_CREATED 주문 수: {}, 기준 시각: {}", expiredOrders.size(), threshold);
+        return expiredOrders.size();
+    }
 
     @Transactional
     public Order createOrder(Long id, List<Long> cartId) {

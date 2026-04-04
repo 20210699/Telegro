@@ -13,10 +13,17 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
+
+    @Query("SELECT o FROM Order o " +
+            "WHERE o.orderStatus = :orderStatus " +
+            "AND o.createdAt < :threshold")
+    List<Order> findAllByOrderStatusAndCreatedAtBefore(
+            @Param("orderStatus") OrderStatus orderStatus,
+            @Param("threshold") LocalDateTime threshold
+    );
 
     @Query("SELECT DISTINCT o FROM Order o " +
             "JOIN o.carts c " +
@@ -120,8 +127,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                                                  @Param("endDate") LocalDateTime endDate,
                                                  @Param("user") User user,
                                                  @Param("orderStatus") OrderStatus orderStatus);
-
-    Optional<Order> findByOrderNumber(String impUid);
 
     List<Order> findByPaymentStatusAndUpdatedAtBefore(PaymentStatus paymentStatus, LocalDateTime threshold);
 }
